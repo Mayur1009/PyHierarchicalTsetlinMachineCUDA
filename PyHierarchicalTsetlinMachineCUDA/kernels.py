@@ -24,9 +24,6 @@
 code_header = """
 	#include <curand_kernel.h>
 	
-	#include <stdio.h>
-	#include<stdlib.h>
-
 	#define INT_SIZE 32ULL
 
 	#define TA_CHUNKS (((FEATURES-1)/INT_SIZE + 1))
@@ -573,7 +570,6 @@ code_encode = """
 			if (index == 0) {
 				printf("Number of literals: %d\\n", number_of_literals);
 				printf("Number of leaves: %d\\n", number_of_leaves);
-				fflush(stdout);
 			}
 
 			for (unsigned long long i = index; i < number_of_examples; i += stride) {
