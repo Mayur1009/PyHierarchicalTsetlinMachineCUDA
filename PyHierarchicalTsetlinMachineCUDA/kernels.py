@@ -618,9 +618,9 @@ code_encode = """
 						if (index == 0) {
 							printf("%d\\n", j*number_of_literal_chunks_per_leaf + leaf_chunk_nr);
 						}
-						/*if (Xi[j*number_of_literals_per_leaf + k] == 1) {
-							encoded_Xi[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] |= (1 << leaf_chunk_pos);
-						}*/
+						if (Xi[j*number_of_literals_per_leaf + k] == 1) {
+							//encoded_Xi[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] |= (1 << leaf_chunk_pos);
+						}
 					}
 				}
 			} 
