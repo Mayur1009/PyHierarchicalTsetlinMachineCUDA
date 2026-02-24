@@ -609,7 +609,7 @@ code_encode = """
 
 			for (unsigned long long i = index; i < number_of_examples; i += stride) {
 				Xi = &X[i*number_of_literals];
-				encoded_Xi = &encoded_X[i*number_of_literal_chunks];
+				/*encoded_Xi = &encoded_X[i*number_of_literal_chunks];
 				for (int j = 0; j < number_of_leaves; ++j) {
 					for (int k = 0; k < number_of_literals_per_leaf; ++k) {
 						int leaf_chunk_nr = k / 32;
@@ -619,7 +619,7 @@ code_encode = """
 							encoded_Xi[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] |= (1 << leaf_chunk_pos);
 						}
 					}
-				}
+				}*/
 			} 
 		}
 	}
