@@ -197,11 +197,12 @@ code_update = """
 					int ta_pos_hierarchy = leaf_literal % 32;
 
 					for (int l = 0; l < STATE_BITS; ++l) {
-						if ((ta_state_flat[ta_chunk_flat*STATE_BITS + l] & (1 << ta_pos_flat)) == 1) {
-							//ta_state_hierarchy[leaf*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_hierarchy*STATE_BITS + l] |= (1 << ta_pos_hierarchy);
+						/*if ((ta_state_flat[ta_chunk_flat*STATE_BITS + l] & (1 << ta_pos_flat)) == 1) {
+							ta_state_hierarchy[leaf*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_hierarchy*STATE_BITS + l] |= (1 << ta_pos_hierarchy);
 						} else {
-							//ta_state_hierarchy[leaf*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_hierarchy*STATE_BITS + l] &= ~(1 << ta_pos_hierarchy);
+							ta_state_hierarchy[leaf*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_hierarchy*STATE_BITS + l] &= ~(1 << ta_pos_hierarchy);
 						}
+						*/
 					}
 				}
 			}
