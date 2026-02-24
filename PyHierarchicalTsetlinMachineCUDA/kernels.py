@@ -175,6 +175,57 @@ code_update = """
 			}
 		}
 
+		// Copy 
+
+		__global__ void convert_ta_states(unsigned int *global_ta_state_flat, unsigned int *global_ta_state_hierarchy)
+		{
+			int index = blockIdx.x * blockDim.x + threadIdx.x;
+			int stride = blockDim.x * gridDim.x;
+
+			// Evaluate each clause component (leaf) in separate threads
+			for (int j = index; j < CLAUSES; j += stride) {
+				unsigned int *ta_state_flat = &global_ta_state_flat[j*TA_CHUNKS*STATE_BITS];
+				unsigned int *ta_state_hierarchy = &global_ta_state_hierarchy[j*LITERAL_CHUNKS*STATE_BITS];
+
+				for (int k = 0; k < FEATURES; ++k) {
+					int ta_chunk_flat = k / 32;
+					int ta_pos_flat = k % 32;
+
+					int leaf = k / LITERALS_PER_LEAF;
+					int leaf_literal = k % LITERALS_PER_LEAF; 
+					int ta_chunk_hierarchy = leaf_literal / 32;
+					int ta_pos_hierarchy = leaf_literal % 32;
+
+					for (int l = 0; l < STATE_BITS; ++l) {
+						if ((ta_state_flat[ta_chunk_flat*STATE_BITS + l] & (1 << ta_pos_flat)) == 1) {
+							ta_state_hierarchy[leaf*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_hierarchy*STATE_BITS + l] |= (1 << ta_pos_hierarchy);
+						} else {
+							ta_state_hierarchy[leaf*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_hierarchy*STATE_BITS + l] &= ~(1 << ta_pos_hierarchy);
+						}
+					}
+				}
+
+				// Get state of current clause component
+				unsigned int *ta_state = &global_ta_state[component*TA_CHUNKS_PER_LEAF*STATE_BITS];
+
+				// Evaluate clause component
+				int component_output = 1;
+				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF-1; ++ta_chunk) {
+					// Compare the TA state of the component (leaf) against the corresponding part of the feature vector
+					if ((ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] & Xi[(component % LITERAL_CHUNKS)*TA_CHUNKS_PER_LEAF + ta_chunk]) != ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]) {
+						component_output = 0;
+						break;
+					}
+				}
+
+				if ((ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & Xi[(component % LITERAL_CHUNKS)*TA_CHUNKS_PER_LEAF + TA_CHUNKS_PER_LEAF-1] & FILTER) != (ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & FILTER)) {
+					component_output = 0;
+				}
+
+				global_component_output[component] = component_output;
+			}
+		}
+
 		// Evaluate example
 		__global__ void evaluate_leaves(unsigned int *global_ta_state, int *component_weights, int *global_component_output, int *X, int example)
 		{
