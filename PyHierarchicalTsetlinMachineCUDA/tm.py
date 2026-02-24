@@ -141,7 +141,7 @@ class CommonTsetlinMachine():
 		for d in range(1, self.depth):
 			self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*int(self.hierarchy_size[d])*4))
 
-		#self.ta_state_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
+		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
 		self.ta_state_gpu = cuda.mem_alloc(self.number_of_clauses*self.number_of_ta_chunks*self.number_of_state_bits*4)
 		self.clause_weights_gpu = cuda.mem_alloc(self.number_of_outputs*self.number_of_clauses*4)
 		self.component_weights_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[1]*4) # Only positive weights...
@@ -300,6 +300,9 @@ class CommonTsetlinMachine():
 			for e in range(number_of_examples):
 				class_sum = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
 				cuda.memcpy_htod(self.class_sum_gpu, class_sum)
+
+				self.convert_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
+				cuda.Context.synchronize()
 
 				self.evaluate_update.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e))
 				cuda.Context.synchronize()
