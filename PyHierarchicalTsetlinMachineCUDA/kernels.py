@@ -182,7 +182,7 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			// Evaluate each clause component (leaf) in separate threads
+			// Convert TA states
 			for (int j = index; j < CLAUSES; j += stride) {
 				unsigned int *ta_state_flat = &global_ta_state_flat[j*TA_CHUNKS*STATE_BITS];
 				unsigned int *ta_state_hierarchy = &global_ta_state_hierarchy[j*LITERAL_CHUNKS*STATE_BITS];
@@ -204,25 +204,6 @@ code_update = """
 						}
 					}
 				}
-
-				// Get state of current clause component
-				unsigned int *ta_state = &global_ta_state[component*TA_CHUNKS_PER_LEAF*STATE_BITS];
-
-				// Evaluate clause component
-				int component_output = 1;
-				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF-1; ++ta_chunk) {
-					// Compare the TA state of the component (leaf) against the corresponding part of the feature vector
-					if ((ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] & Xi[(component % LITERAL_CHUNKS)*TA_CHUNKS_PER_LEAF + ta_chunk]) != ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]) {
-						component_output = 0;
-						break;
-					}
-				}
-
-				if ((ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & Xi[(component % LITERAL_CHUNKS)*TA_CHUNKS_PER_LEAF + TA_CHUNKS_PER_LEAF-1] & FILTER) != (ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & FILTER)) {
-					component_output = 0;
-				}
-
-				global_component_output[component] = component_output;
 			}
 		}
 
