@@ -288,6 +288,9 @@ class CommonTsetlinMachine():
 			self.evaluate_leaves = mod_update.get_function("evaluate_leaves")
 			self.evaluate_leaves.prepare("PPPPi")
 
+			self.evaluate_and_groups = mod_update.get_function("evaluate_and_groups")
+			self.evaluate_and_groups.prepare("PPii")
+
 			self.encoded_X_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_patches * self.number_of_ta_chunks*4))
 			self.encoded_X_hierarchy_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
 			print("ALLOCATING TRAINING", number_of_examples * self.number_of_literal_chunks * 4, number_of_examples, self.number_of_literal_chunks, 4)
@@ -312,6 +315,11 @@ class CommonTsetlinMachine():
 				cuda.Context.synchronize()
 
 				self.evaluate_leaves.prepared_call(self.grid, self.block, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.encoded_X_hierarchy_training_gpu, np.int32(e))
+				cuda.Context.synchronize()
+
+				print(self.hierarchy_structure)
+				print(self.hierarchy_size)
+				self.evaluate_and_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_votes[1], self.hierarchy_size[2], self.hierarchy_structure[2])
 				cuda.Context.synchronize()
 
 				self.evaluate_update.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e))
