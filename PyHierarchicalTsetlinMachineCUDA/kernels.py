@@ -198,6 +198,7 @@ code_update = """
 					for (int l = 0; l < STATE_BITS; ++l) {
 						if ((ta_state_flat[ta_chunk_flat*STATE_BITS + l] & (1 << ta_pos_flat)) != (ta_state_hierarchy[leaf*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_hierarchy*STATE_BITS + l] & (1 << ta_pos_hierarchy))) {
 							printf("ERROR\\n");
+							return;
 						}
 					}
 				}
