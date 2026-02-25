@@ -215,9 +215,9 @@ code_update = """
 
 			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
 
-			if (index == 0) {
-				printf("%d %d\\n", CLAUSES, COMPONENTS);
-			}
+			//if (index == 0) {
+			//	printf("%d %d\\n", CLAUSES, COMPONENTS);
+			//}
 
 			// Evaluate each clause component (leaf) in separate threads
 			for (int component = index; component < CLAUSES*COMPONENTS; component += stride) {
@@ -238,7 +238,7 @@ code_update = """
 					component_output = 0;
 				}
 
-				//global_component_output[component] = component_output;
+				global_component_output[component] = component_output;
 			}
 		}
 
