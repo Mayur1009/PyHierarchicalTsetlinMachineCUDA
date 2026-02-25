@@ -319,7 +319,7 @@ class CommonTsetlinMachine():
 
 				print(self.hierarchy_structure)
 				print(self.hierarchy_size)
-				self.evaluate_and_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_votes[1], self.hierarchy_size[2], self.hierarchy_structure[2])
+				self.evaluate_and_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_votes[1], self.hierarchy_size[1], self.hierarchy_structure[1][1])
 				cuda.Context.synchronize()
 
 				self.evaluate_update.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e))
