@@ -210,6 +210,10 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
+			if (index == 0) {
+				printf("TA_CHUNKS %d LITERAL_CHUNKS %d\\n", TA_CHUNKS, LITERAL_CHUNKS);
+			}
+
 			// Convert TA states
 			for (int j = index; j < CLAUSES; j += stride) {
 				unsigned int *ta_state_flat = &global_ta_state_flat[j*TA_CHUNKS*STATE_BITS];
