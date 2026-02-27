@@ -304,6 +304,9 @@ class CommonTsetlinMachine():
 			self.evaluate_leaves = mod_update.get_function("evaluate_leaves")
 			self.evaluate_leaves.prepare("PPPPi")
 
+			self.evaluate_leaves_compare = mod_update.get_function("evaluate_leaves_compare")
+			self.evaluate_leaves_compare.prepare("PPPPPi")
+
 			self.evaluate_and_groups_final = mod_update.get_function("evaluate_and_groups_final")
 			self.evaluate_and_groups_final.prepare("PiiPP")
 
@@ -337,6 +340,9 @@ class CommonTsetlinMachine():
 				cuda.Context.synchronize()
 
 				self.evaluate_leaves.prepared_call(self.grid, self.block, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.encoded_X_hierarchy_training_gpu, np.int32(e))
+				cuda.Context.synchronize()
+
+				self.evaluate_leaves_compare.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.encoded_X_hierarchy_training_gpu, np.int32(e))
 				cuda.Context.synchronize()
 
 				#self.evaluate_and_groups_final.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_size[1], self.hierarchy_structure[1][1], self.clause_weights_gpu, self.class_sum_gpu)
