@@ -776,8 +776,6 @@ code_encode = """
 
 						if (Xi[j*number_of_literals_per_leaf + k] == 1) {
 							encoded_Xi[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] |= (1 << leaf_chunk_pos);
-						} else {
-							encoded_Xi[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] &= ~(1 << leaf_chunk_pos);
 						}
 					}
 				}
