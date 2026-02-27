@@ -697,7 +697,7 @@ code_encode = """
 			}
 		}
 
-		__global__ void encode_compare(unsigned int *encoded_X, unsigned int *encoded_X_hierarchy, int number_of_literals, int number_of_literal_chunks, int number_of_leaves, int number_of_literals_per_leaf, int number_of_literal_chunks_per_leaf, int number_of_examples)
+		__global__ void encode_compare(unsigned int *encoded_X, unsigned int *encoded_X_hierarchy, int number_of_ta_chunks, int number_of_literals, int number_of_literal_chunks, int number_of_leaves, int number_of_literals_per_leaf, int number_of_literal_chunks_per_leaf, int number_of_examples)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -713,7 +713,7 @@ code_encode = """
 			}
 
 			for (unsigned long long i = index; i < number_of_examples; i += stride) {
-				encoded_Xi = &X[i*TA_CHUNKS];
+				encoded_Xi = &X[i*number_of_ta_chunks];
 				encoded_Xi_hierarchy = &encoded_X[i*number_of_literal_chunks];
 
 				for (int j = 0; j < number_of_leaves; ++j) {
