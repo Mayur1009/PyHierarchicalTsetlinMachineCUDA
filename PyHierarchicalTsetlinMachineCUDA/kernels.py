@@ -715,7 +715,7 @@ code_encode = """
 
 			for (unsigned long long i = index; i < number_of_examples; i += stride) {
 				encoded_Xi = &encoded_X[i*number_of_ta_chunks];
-				encoded_Xi_hierarchy = &encoded_X[i*number_of_literal_chunks];
+				encoded_Xi_hierarchy = &encoded_X_hierarchy[i*number_of_literal_chunks];
 				Xi = &X[i*number_of_literals];
 
 				for (int j = 0; j < number_of_leaves; ++j) {
