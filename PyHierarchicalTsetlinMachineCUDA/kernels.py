@@ -281,16 +281,16 @@ code_update = """
 		}
 
 		// Evaluate example
-		__global__ void evaluate_leaves_compare(unsigned int *global_ta_state_flat, unsigned int *global_ta_state, int *component_weights, int *global_component_output, int *X, int example)
+		__global__ void evaluate_leaves_compare(unsigned int *global_ta_state_flat, unsigned int *global_ta_state, int *component_weights, int *global_component_output, int *X_hierarchy, int *X, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
-
 			//if (index == 0) {
 			//	printf("%d %d\\n", CLAUSES, COMPONENTS);
 			//}
+
+			int *Xi = &X_hierarchy[(unsigned long long)example*LITERAL_CHUNKS];
 
 			// Evaluate each clause component (leaf) in separate threads
 			for (int component = index; component < CLAUSES*COMPONENTS; component += stride) {
