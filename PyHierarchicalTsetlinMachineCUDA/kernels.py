@@ -333,7 +333,6 @@ code_update = """
 				}
 
 				if (and_group_vote_product) {
-					int clause = and_group_node / number_of_and_group_nodes;
 					for (int class_id = 0; class_id < CLASSES; ++class_id) {
 						int clause_weight = clause_weights[class_id*CLAUSES + clause];
 						atomicAdd(&class_sum[class_id], clause_weight * and_group_vote_product);					
