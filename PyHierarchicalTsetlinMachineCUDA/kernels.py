@@ -293,16 +293,22 @@ code_update = """
 			}
 		}
 
-		__global__ void evaluate_and_groups(int *child_input, int *and_group_node_output, int number_of_and_group_nodes, int number_of_and_factors)
+		__global__ void evaluate_and_groups(int *child_input, int *and_group_node_output, int number_of_and_group_nodes, int number_of_and_group_factors)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
+
+			if (index == 0) {
+				printf("AND GROUP NODES PER CLAUSE %d\\n", number_of_and_group_nodes);
+				printf("AND GROUP NODE FACTORS %d\\n", number_of_and_group_factors);
+				printf("CLAUSES %d\\n", CLAUSES);
+			}
 
 			// Add up the votes of each OR node
 			for (int and_group_node = index; and_group_node < CLAUSES*number_of_and_group_nodes; and_group_node += stride) {
 				// Multiply and factors
 				int and_group_vote_product = 1;
-				for (int and_factor = 0; and_factor < number_of_and_factors; ++and_factor) {
+				for (int and_factor = 0; and_factor < number_of_and_group_factors; ++and_factor) {
 					// Aggregate votes from each child node through multiplication
 					and_group_vote_product *= child_input[and_group_node*number_of_and_factors + and_factor];
 				}
