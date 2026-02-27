@@ -145,6 +145,7 @@ class CommonTsetlinMachine():
 		for d in range(1, self.depth):
 			print("Hierarchy size", d-1, self.number_of_clauses, int(self.hierarchy_size[d]), 4)
 			self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*int(self.hierarchy_size[d])*4))
+		print("Hierarchy size", self.depth-1, self.number_of_clauses, int(self.hierarchy_size[self.depth-1]), 4)
 		self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*4))
 
 		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
@@ -333,6 +334,7 @@ class CommonTsetlinMachine():
 				#self.evaluate_and_groups_final.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_size[1], self.hierarchy_structure[1][1], self.clause_weights_gpu, self.class_sum_gpu)
 				#cuda.Context.synchronize()
 
+				print("EVALUATE AND GROUPS", self.hierarchy_size[1], self.hierarchy_structure[1][1])
 				self.evaluate_and_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_votes[1], self.hierarchy_size[1], self.hierarchy_structure[1][1])
 				cuda.Context.synchronize()
 
