@@ -298,11 +298,11 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			if (index == 0) {
-				printf("AND GROUP NODES PER CLAUSE %d\\n", number_of_and_group_nodes);
-				printf("AND GROUP NODE FACTORS %d\\n", number_of_and_group_factors);
-				printf("CLAUSES %d\\n", CLAUSES);
-			}
+//			if (index == 0) {
+//				printf("AND GROUP NODES PER CLAUSE %d\\n", number_of_and_group_nodes);
+//				printf("AND GROUP NODE FACTORS %d\\n", number_of_and_group_factors);
+//				printf("CLAUSES %d\\n", CLAUSES);
+//			}
 
 			// Add up the votes of each OR node
 			for (int and_group_node = index; and_group_node < CLAUSES*number_of_and_group_nodes; and_group_node += stride) {
