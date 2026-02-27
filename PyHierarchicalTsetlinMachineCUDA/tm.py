@@ -109,6 +109,8 @@ class CommonTsetlinMachine():
 		self.prepare_encode_hierarchy = mod_encode.get_function("prepare_encode_hierarchy")
 		self.encode_hierarchy = mod_encode.get_function("encode_hierarchy")
 
+		self.encode_compare = mod_encode.get_function("encode_compare")
+
 	def encode_X(self, X, encoded_X_gpu, encoded_X_hierarchy_gpu):
 		number_of_examples = X.shape[0]
 
@@ -137,6 +139,9 @@ class CommonTsetlinMachine():
 		self.prepare_encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literal_chunks), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()	
 		self.encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literals), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_literals_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(number_of_examples), grid=self.grid, block=self.block)
+		cuda.Context.synchronize()
+
+		self.encode_compare(encoded_X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literals), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_literals_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
 	def allocate_gpu_memory(self, number_of_examples):
