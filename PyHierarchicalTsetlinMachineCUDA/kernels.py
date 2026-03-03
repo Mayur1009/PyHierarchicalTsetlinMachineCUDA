@@ -358,7 +358,7 @@ code_update = """
 					}
 				}
 
-				if (clause_output != component_output && index < 10) {
+				if (clause_output != component_output) {
 					printf("COMPONENTS %d (%d)\\n", COMPONENTS, index);
 					printf("FEATURES %d (%d)\\n", FEATURES, index);
 					printf("LITERAL_CHUNKS %d (%d)\\n", LITERAL_CHUNKS, index);
