@@ -358,8 +358,7 @@ code_update = """
 					}
 				}
 
-				if (clause_output != component_output) {
-					printf("TA_CHUNKS %d %d\\n", TA_CHUNKS_PER_LEAF, TA_CHUNKS);
+				if (clause_output != component_output && index == 0) {
 					printf("FEATURES %d\\n", FEATURES);
 					printf("LITERAL_CHUNKS %d\\n", LITERAL_CHUNKS);
 					printf("TA_CHUNKS %d %d\\n", TA_CHUNKS_PER_LEAF, TA_CHUNKS);
