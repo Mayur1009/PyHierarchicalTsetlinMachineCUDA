@@ -365,6 +365,8 @@ code_update = """
 					}
 				}
 
+				global_component_output[component] = component_output;
+
 				if (clause_output != component_output) {
 					printf("COMPONENTS %d (%d)\\n", COMPONENTS, index);
 					printf("FEATURES %d (%d)\\n", FEATURES, index);
@@ -412,8 +414,6 @@ code_update = """
 
 					printf("OUTPUT: %d %d\\n", component_output, clause_output);
 				}
-
-				global_component_output[component] = component_output;
 			}
 		}
 
