@@ -360,7 +360,8 @@ code_update = """
 
 				if (clause_output != component_output) {
 					printf("TA_CHUNKS %d %d\\n", TA_CHUNKS_PER_LEAF, TA_CHUNKS);
-					printf("LITERAL_CHUNKS %d %d\\n", LITERAL_CHUNKS);
+					printf("FEATURES %d\\n", FEATURES);
+					printf("LITERAL_CHUNKS %d\\n", LITERAL_CHUNKS);
 
 					ta_state = &global_ta_state[component*TA_CHUNKS_PER_LEAF*STATE_BITS];
 
