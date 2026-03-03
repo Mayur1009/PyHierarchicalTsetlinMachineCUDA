@@ -336,6 +336,10 @@ code_update = """
 						component_output = 0;
 						break;
 					}
+
+					if (X[(unsigned long long)example*(TA_CHUNKS*PATCHES) + ta_chunk] != Xi[(component % LITERAL_CHUNKS)*TA_CHUNKS_PER_LEAF + ta_chunk]) {
+						printf("INPUT ERROR\\n");
+					}
 				}
 
 				if ((ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & Xi[(component % LITERAL_CHUNKS)*TA_CHUNKS_PER_LEAF + TA_CHUNKS_PER_LEAF-1] & FILTER_HIERARCHICAL) != (ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & FILTER_HIERARCHICAL)) {
