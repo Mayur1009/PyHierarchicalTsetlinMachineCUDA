@@ -358,10 +358,11 @@ code_update = """
 					}
 				}
 
-				if (clause_output != component_output && index == 0) {
-					printf("FEATURES %d\\n", FEATURES);
-					printf("LITERAL_CHUNKS %d\\n", LITERAL_CHUNKS);
-					printf("TA_CHUNKS %d %d\\n", TA_CHUNKS_PER_LEAF, TA_CHUNKS);
+				if (clause_output != component_output && index < 10) {
+					printf("COMPONENTS %d (%d)\\n", COMPONENTS, index);
+					printf("FEATURES %d (%d)\\n", FEATURES, index);
+					printf("LITERAL_CHUNKS %d (%d)\\n", LITERAL_CHUNKS, index);
+					printf("TA_CHUNKS %d %d (%d)\\n", TA_CHUNKS_PER_LEAF, TA_CHUNKS, index);
 
 					ta_state = &global_ta_state[component*TA_CHUNKS_PER_LEAF*STATE_BITS];
 
