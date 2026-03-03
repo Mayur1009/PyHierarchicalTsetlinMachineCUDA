@@ -286,9 +286,16 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			//if (index == 0) {
-			//	printf("%d %d\\n", CLAUSES, COMPONENTS);
-			//}
+			if (index == 0) {
+				printf("%d %d\\n", CLAUSES, COMPONENTS);
+
+				printf("COMPONENTS %d (%d)\\n", COMPONENTS, index);
+				printf("FEATURES %d (%d)\\n", FEATURES, index);
+				printf("LITERAL_CHUNKS %d (%d)\\n", LITERAL_CHUNKS, index);
+				printf("TA_CHUNKS %d %d (%d)\\n", TA_CHUNKS_PER_LEAF, TA_CHUNKS, index);
+			}
+
+
 
 			int *Xi = &X_hierarchy[(unsigned long long)example*LITERAL_CHUNKS];
 
