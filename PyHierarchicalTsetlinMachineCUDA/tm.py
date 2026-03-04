@@ -343,7 +343,7 @@ class CommonTsetlinMachine():
 				cuda.Context.synchronize()
 
 				for d in range(1, self.depth):
-					if (hierarchy_structure[d,0] == AND_GROUP):
+					if (self.hierarchy_structure[d,0] == AND_GROUP):
 						print("****", self.hierarchy_size[d])
 						self.evaluate_and_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[d-1], self.hierarchy_votes[d], 1, self.hierarchy_structure[1][1])
 						cuda.Context.synchronize()
