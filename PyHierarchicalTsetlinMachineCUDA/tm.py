@@ -345,20 +345,20 @@ class CommonTsetlinMachine():
 				#self.evaluate_leaves_compare.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.encoded_X_hierarchy_training_gpu, self.encoded_X_training_gpu, np.int32(e))
 				#cuda.Context.synchronize()
 
-				#self.evaluate_and_groups_final.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_size[1], self.hierarchy_structure[1][1], self.clause_weights_gpu, self.class_sum_gpu)
-				#cuda.Context.synchronize()
+				self.evaluate_and_groups_final.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_size[1], self.hierarchy_structure[1][1], self.clause_weights_gpu, self.class_sum_gpu)
+				cuda.Context.synchronize()
 
 				#self.evaluate_and_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[0], self.hierarchy_votes[1], 1, self.hierarchy_structure[1][1])
 				#cuda.Context.synchronize()
 
-				self.evaluate_update_compare.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e), self.hierarchy_votes[0])
-				cuda.Context.synchronize()
+				#self.evaluate_update_compare.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e), self.hierarchy_votes[0])
+				#cuda.Context.synchronize()
 
-				class_sum = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
-				cuda.memcpy_htod(self.class_sum_gpu, class_sum)
+				#class_sum = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
+				#cuda.memcpy_htod(self.class_sum_gpu, class_sum)
 
-				self.evaluate_update.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e))
-				cuda.Context.synchronize()
+				#self.evaluate_update.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e))
+				#cuda.Context.synchronize()
 
 				self.update.prepared_call(self.grid, self.block, g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, self.Y_gpu, np.int32(e))
 				cuda.Context.synchronize()
