@@ -54,11 +54,11 @@ class CommonTsetlinMachine():
 		self.grid = grid
 		self.block = block
 
-		self.hierarchy_size = [0] * len(self.hierarchy_structure)
+		self.hierarchy_size = [0] * len(self.hierarchy_structure + 1)
 
-		size_level = 1
+		self.hierarchy_size[self.depth] = 1
 		print(self.depth)
-		for d in range(self.depth -1):
+		for d in range(self.depth - 1):
 			size_level *= self.hierarchy_structure[self.depth - d - 1][1]
 			self.hierarchy_size[self.depth - d - 1] = size_level
 			print(self.depth - d - 1, self.hierarchy_size[self.depth - d - 1])
