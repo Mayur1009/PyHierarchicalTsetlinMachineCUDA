@@ -328,7 +328,7 @@ class CommonTsetlinMachine():
 			self.compare_ta_states.prepare("PP")
 
 			self.evaluate_leaves = mod_update.get_function("evaluate_leaves")
-			self.evaluate_leaves.prepare("PPPPi")
+			self.evaluate_leaves.prepare("PPPiPPi")
 
 			self.evaluate_leaves_compare = mod_update.get_function("evaluate_leaves_compare")
 			self.evaluate_leaves_compare.prepare("PPPPPPi")
@@ -365,7 +365,7 @@ class CommonTsetlinMachine():
 				#self.compare_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
 				#cuda.Context.synchronize()
 
-				self.evaluate_leaves.prepared_call(self.grid, self.block, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.encoded_X_hierarchy_training_gpu, np.int32(e))
+				self.evaluate_leaves.prepared_call(self.grid, self.block, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.depth, self.literal_groups_index_gpu, self.encoded_X_hierarchy_training_gpu, np.int32(e))
 				cuda.Context.synchronize()
 
 				for d in range(1, self.depth):
