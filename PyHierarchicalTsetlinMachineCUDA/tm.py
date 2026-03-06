@@ -39,7 +39,7 @@ AND_GROUP = "AND a group of children"
 g = curandom.XORWOWRandomNumberGenerator() 
 
 class CommonTsetlinMachine():
-	def __init__(self, number_of_clauses, T, s, q=1.0, hierarchy_structure=((AND_GROUP, 28), (AND_GROUP, 28)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
+	def __init__(self, number_of_clauses, T, s, q=1.0, hierarchy_structure=((AND_GROUP, 28), (AND_GROUP, 14), (AND_GROUP, 2)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
 		self.number_of_clauses = number_of_clauses
 		self.number_of_clause_chunks = (number_of_clauses-1)/32 + 1
 		self.number_of_state_bits = number_of_state_bits
@@ -62,17 +62,16 @@ class CommonTsetlinMachine():
 			print(self.hierarchy_size[self.depth - d])
 			self.hierarchy_size[self.depth - d - 1] = self.hierarchy_structure[self.depth - d - 1][1] * self.hierarchy_size[self.depth - d]
 			print(self.depth - d - 1, self.hierarchy_size[self.depth - d - 1])
-		print(self.hierarchy_size)
+		print("HIERARCHY SIZE", self.hierarchy_size)
 
-		self.literal_groups_covered = [0] * self.depth
-		self.literal_groups_covered[self.depth - 1] = 1
+		self.literal_groups_split = [0] * self.depth
+		self.literal_groups_split[0] = 1
 		for d in range(1, self.depth):
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
-				self.literal_groups_covered[self.depth - d - 1] = self.literal_groups_covered[self.depth - d] * self.hierarchy_structure[d][1]
+				self.literal_groups_split[d] = self.literal_groups_split[d - 1] * self.hierarchy_structure[d][1]
 			else:
-				self.literal_groups_covered[self.depth - d - 1] = self.literal_groups_covered[self.depth - d]
-
-		print("LITERAL GROUPS COVERED", self.literal_groups_covered)
+				self.literal_groups_split[self.depth - d - 1] = 0s
+		print("LITERAL GROUPS SPLIT", self.literal_groups_split)
 
 		self.number_of_features = 1
 		for d in range(self.depth - 1, -1, -1):
