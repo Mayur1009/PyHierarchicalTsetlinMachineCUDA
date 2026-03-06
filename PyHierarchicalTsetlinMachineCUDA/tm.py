@@ -74,15 +74,6 @@ class CommonTsetlinMachine():
 
 		print("LITERAL GROUPS COVERED", self.literal_groups_covered)
 
-
-		self.literal_groups_covered[self.depth] = 1
-		print(self.depth)
-		for d in range(self.depth - 1):
-			print(self.hierarchy_size[self.depth - d])
-			self.hierarchy_size[self.depth - d - 1] = self.hierarchy_structure[self.depth - d - 1][1] * self.hierarchy_size[self.depth - d]
-			print(self.depth - d - 1, self.hierarchy_size[self.depth - d - 1])
-		print(self.hierarchy_size)
-
 		self.number_of_features = 1
 		for d in range(self.depth - 1, -1, -1):
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
