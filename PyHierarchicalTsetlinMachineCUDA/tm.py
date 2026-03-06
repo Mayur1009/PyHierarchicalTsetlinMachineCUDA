@@ -81,8 +81,9 @@ class CommonTsetlinMachine():
 
 		self.hierarchy_size[0] = self.number_of_literal_chunks_per_leaf * self.hierarchy_size[1]
 
+		self.literal_split = [0] * (self.depth - 1)
 		previous_number_of_literal_chunks = self.hierarchy_size[0]
-		for d in range(1, self.depth):
+		for d in range(self.depth-1):
 			if self.hierarchy_structure[self.depth - d - 1][0] == AND_GROUP or self.hierarchy_structure[self.depth - d - 1][0] == OR_GROUP:
 				self.literal_split[d] = previous_number_of_literal_chunks // self.hierarchy_structure[self.depth - d - 1][1]
 				previous_number_of_literal_chunks = self.literal_split[d]
@@ -90,7 +91,7 @@ class CommonTsetlinMachine():
 				self.literal_split[d] = 0
 
 		print("LITERAL SPLIT", self.literal_split)
-		
+
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf
 		for d in range(self.depth - 1, 0, -1):
 			print("HELLO", d)
