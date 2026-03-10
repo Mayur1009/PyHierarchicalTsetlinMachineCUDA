@@ -255,7 +255,6 @@ code_update = """
 
 			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
 
-
 			// Evaluate each clause component (leaf) in separate threads
 			for (int clause_component = index; clause_component < CLAUSES*COMPONENTS; clause_component += stride) {
 				int clause = clause_component / COMPONENTS;
@@ -269,7 +268,7 @@ code_update = """
 					ta_chunk_index[d] = remainder % literal_groups_index[d];
 					remainder /= literal_groups_index[d];
 
-					if (clause == 0) {
+					if (clause == -1) {
 						printf("%d: %d %d %d\\n", component, d, ta_chunk_index[d], literal_groups_index[d]);
 					}
 				}
