@@ -73,8 +73,7 @@ class CommonTsetlinMachine():
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
 				self.literal_groups_index[d] = previous_literal_group_index * self.hierarchy_structure[d][1]
 				previous_literal_group_index = self.literal_groups_index[d]
-			else:
-				self.literal_groups_index[self.depth - d - 1] = 0
+
 		print("LITERAL GROUPS INDEX", self.literal_groups_index)
 
 		self.number_of_features = 1
@@ -179,7 +178,7 @@ class CommonTsetlinMachine():
 		self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*4))
 
 		self.literal_groups_index_gpu = cuda.mem_alloc(self.depth*4)
-		cuda.memcpy_htod(self.literal_groups_index_gpu, np.array(self.literal_groups_index_gpu, dtype=np.int32))
+		cuda.memcpy_htod(self.literal_groups_index_gpu, np.array(self.literal_groups_index, dtype=np.int32))
 
 		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
 		self.ta_state_gpu = cuda.mem_alloc(self.number_of_clauses*self.number_of_ta_chunks*self.number_of_state_bits*4)
