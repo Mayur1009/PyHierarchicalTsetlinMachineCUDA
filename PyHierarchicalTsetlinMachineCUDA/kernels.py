@@ -268,7 +268,7 @@ code_update = """
 					ta_chunk_index[d] = remainder % literal_groups_index[d];
 					remainder /= literal_groups_index[d];
 
-					if (clause == -1) {
+					if (clause == 0) {
 						printf("%d: %d %d %d\\n", component, d, ta_chunk_index[d], literal_groups_index[d]);
 					}
 				}
