@@ -254,7 +254,7 @@ code_update = """
 			int stride = blockDim.x * gridDim.x;
 
 			int ta_chunks_index[DEPTH-1];
-			int ta_chunks_size[DEPTH-2];
+			int ta_chunks_size[DEPTH-1];
 
 			ta_chunks_size[0] = 1;
 			for (int d = 1; d < depth-1; ++d) {
@@ -283,7 +283,7 @@ code_update = """
 
 					ta_chunk_base_index += ta_chunks_size[d] * ta_chunks_index[d];
 
-					if (clause == -1 && component == 27) {
+					if (clause == 0 && component == 27) {
 						printf("%d: %d (%d %d) (%d)\\n", d, component, ta_chunks_index[d], ta_chunks_size[d], ta_chunk_base_index);
 					}
 				}
