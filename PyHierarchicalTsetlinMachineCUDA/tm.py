@@ -66,14 +66,14 @@ class CommonTsetlinMachine():
 			print(self.depth - d - 1, self.hierarchy_size[self.depth - d - 1])
 		print("HIERARCHY SIZE", self.hierarchy_size)
 
-		self.literal_groups_index = [0] * self.depth
+		self.literal_groups_index = [0] * (self.depth - 1)
 		previous_literal_group_index = 1
-		for d in range(self.depth):
+		for d in range(1, self.depth):
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
-				self.literal_groups_index[d] = previous_literal_group_index * self.hierarchy_structure[d][1]
+				self.literal_groups_index[d-1] = previous_literal_group_index * self.hierarchy_structure[d][1]
 				previous_literal_group_index = self.literal_groups_index[d]
 			else:
-				self.literal_groups_index[d] = 1
+				self.literal_groups_index[d-1] = 1
 
 		print("LITERAL GROUPS INDEX", self.literal_groups_index)
 
