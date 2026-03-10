@@ -253,6 +253,13 @@ code_update = """
 
 			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
 
+			if (index == 0) {
+				for (int d = 0; d < depth; ++d) {
+					printf("%d %d\\n", d, literal_groups_index[d]);
+				}
+
+			}
+
 			// Evaluate each clause component (leaf) in separate threads
 			for (int component = index; component < CLAUSES*COMPONENTS; component += stride) {
 				// Get state of current clause component
