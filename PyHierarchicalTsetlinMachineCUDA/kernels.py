@@ -29,6 +29,8 @@ code_header = """
 	#define TA_CHUNKS (((FEATURES-1)/INT_SIZE + 1))
 	#define CLAUSE_CHUNKS ((CLAUSES-1)/INT_SIZE + 1)
 
+	#define LITERAL_LEAVES (LITERAL_CHUNKS / TA_CHUNKS_PER_LEAF)
+
 	#if (FEATURES % 32 != 0)
 	#define FILTER (~(0xffffffff << (FEATURES % INT_SIZE)))
 	#else
@@ -265,12 +267,12 @@ code_update = """
 
 				int component_remainder = component;
 				for (int d = 0; d < depth-1; ++d) {
-					ta_chunk_index[d] = component_remainder / (LITERAL_CHUNKS / literal_groups_index[d]);
+					ta_chunk_index[d] = component_remainder / (LITERAL_LEAVES / literal_groups_index[d]);
 
-					component_remainder = component_remainder - ta_chunk_index[d] * (LITERAL_CHUNKS / literal_groups_index[d]);
+					component_remainder = component_remainder - ta_chunk_index[d] * (LITERAL_LEAVES / literal_groups_index[d]);
 
 					if (clause == 0) {
-						printf("%d: %d %d %d %d (%d %d)\\n", component, d, component_remainder, ta_chunk_index[d], literal_groups_index[d], LITERAL_CHUNKS, LITERAL_CHUNKS / literal_groups_index[d]);
+						printf("%d: %d %d %d %d (%d %d)\\n", component, d, component_remainder, ta_chunk_index[d], literal_groups_index[d], LITERAL_LEAVES, LITERAL_LEAVES / literal_groups_index[d]);
 					}
 				}
 
