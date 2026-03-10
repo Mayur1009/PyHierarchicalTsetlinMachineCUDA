@@ -256,10 +256,9 @@ code_update = """
 			int ta_chunks_index[DEPTH-1];
 			int ta_chunks_size[DEPTH-2];
 
-			int previous_size = 1;
-			for (int d = 0; d < depth-2; ++d) {
-				ta_chunks_size[d] = previous_size * literal_groups_index[d];
-				previous_size = ta_chunks_size[d];
+			ta_chunks_size[0] = 1;
+			for (int d = 1; d < depth-1; ++d) {
+				ta_chunks_size[d] = ta_chunks_size[d-1] * literal_groups_index[d];
 
 				if (index == 0) {
 					printf("%d: %d\\n", d, ta_chunks_size[d]);
