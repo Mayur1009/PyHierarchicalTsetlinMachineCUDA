@@ -263,11 +263,8 @@ code_update = """
 				// Get state of current clause component
 				unsigned int *ta_state = &global_ta_state[clause_component*TA_CHUNKS_PER_LEAF*STATE_BITS];
 
-				int remainder = component;
 				for (int d = 0; d < depth-1; ++d) {
-					ta_chunk_index[d] = remainder % literal_groups_index[d];
-					remainder /= literal_groups_index[d];
-
+					ta_chunk_index[d] = component % literal_groups_index[d];
 					if (clause == 0) {
 						printf("%d: %d %d %d\\n", component, d, ta_chunk_index[d], literal_groups_index[d]);
 					}
