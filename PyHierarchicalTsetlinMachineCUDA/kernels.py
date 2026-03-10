@@ -261,7 +261,7 @@ code_update = """
 				ta_chunks_size[d] = previous_size * literal_groups_index[d];
 				previous_size = ta_chunks_size[d];
 
-				if (clause == 0) {
+				if (index == 0) {
 					printf("%d: %d\\n", depth, ta_chunks_size[d]);
 				}
 			}
