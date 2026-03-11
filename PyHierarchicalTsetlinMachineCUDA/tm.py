@@ -74,7 +74,8 @@ class CommonTsetlinMachine():
 			if self.hierarchy_structure[d][0] == OR_ALTERNATIVES:
 				self.hierarchy_structure_alternatives[d-1] = 1 
 
-		print("LITERAL GROUPS INDEX", self.literal_groups_index)
+		print("HIERARCHY STRUCTURE FACTORS", self.hierarchy_structure_factors)
+		print("HIERARCHY STRUCTURE alternatives", self.hierarchy_structure_alternatives)
 
 		self.number_of_features = 1
 		for d in range(self.depth - 1, -1, -1):
