@@ -258,7 +258,7 @@ code_update = """
 
 			ta_chunks_size[0] = 1;
 			for (int d = 1; d < depth-1; ++d) {
-				ta_chunks_size[d] = ta_chunks_size[d-1] * literal_groups_index[d-1];
+				ta_chunks_size[d] = ta_chunks_size[d-1] * hierarchy_structure_factors[d-1];
 
 				if (index == 0) {
 					printf("*%d: %d\\n", d, ta_chunks_size[d]);
@@ -278,8 +278,8 @@ code_update = """
 				int component_remainder = component;
 				int ta_chunk_base_index = 0;
 				for (int d = 0; d < depth-1; ++d) {
-					ta_chunks_index[d] = component_remainder % literal_groups_index[d];
-					component_remainder = component_remainder / literal_groups_index[d];
+					ta_chunks_index[d] = component_remainder % hierarchy_structure_factors[d];
+					component_remainder = component_remainder / hierarchy_structure_factors[d];
 
 					ta_chunk_base_index += ta_chunks_size[d] * ta_chunks_index[d] * TA_CHUNKS_PER_LEAF;
 
