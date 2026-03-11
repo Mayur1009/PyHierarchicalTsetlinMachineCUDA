@@ -283,7 +283,7 @@ code_update = """
 				int component_remainder = component;
 				int ta_chunk_base_index = 0;
 				int size = 1;
-				for (int d = 0; d < depth-1; ++d) {
+				for (int d = 0; d < depth; ++d) {
 					ta_chunks_index[d] = component_remainder % hierarchy_structure_factors[d];
 					component_remainder = component_remainder / hierarchy_structure_factors[d];
 
