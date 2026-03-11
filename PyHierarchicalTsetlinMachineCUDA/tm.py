@@ -67,8 +67,8 @@ class CommonTsetlinMachine():
 			print(self.depth - d - 1, self.hierarchy_size[self.depth - d - 1])
 		print("HIERARCHY SIZE", self.hierarchy_size)
 
-		self.hiearchy_structure_factors = [0] * (self.depth - 1)
-		self.hiearchy_structure_alternatives = [0] * (self.depth - 1)
+		self.hierarchy_structure_factors = [0] * (self.depth - 1)
+		self.hierarchy_structure_alternatives = [0] * (self.depth - 1)
 		for d in range(1, self.depth):
 			self.hierarchy_structure_factors[d-1] = self.hierarchy_structure[d][1]
 			if self.hierarchy_structure[d][0] == OR_ALTERNATIVES:
