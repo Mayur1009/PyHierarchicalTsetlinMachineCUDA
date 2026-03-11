@@ -264,19 +264,19 @@ code_update = """
 				unsigned int *ta_state = &global_ta_state[clause_component*TA_CHUNKS_PER_LEAF*STATE_BITS];
 
 				int component_remainder = component;
-				int ta_chunk_base_index = 0;
+				int ta_chunk_base = 0;
 				int size = 1;
 				for (int d = 0; d < depth-1; ++d) {
-					int ta_chunks_index = component_remainder % hierarchy_structure_factors[d];
+					int depth_d_node_index = component_remainder % hierarchy_structure_factors[d];
 					component_remainder = component_remainder / hierarchy_structure_factors[d];
 
 					if (hierarchy_structure_alternatives[d] == 0) {
-						ta_chunk_base_index += size * ta_chunks_index * TA_CHUNKS_PER_LEAF;
+						ta_chunk_base += size * depth_d_node_index * TA_CHUNKS_PER_LEAF;
 						size *= hierarchy_structure_factors[d];
 					}
 
 					if (clause == -1 && d == depth-2) {
-						printf("%d: %d (%d) (%d = %d) %d\\n", d, component, ta_chunks_index, ta_chunk_base_index, (component % (LITERAL_CHUNKS / TA_CHUNKS_PER_LEAF))*TA_CHUNKS_PER_LEAF, component_remainder);
+						printf("%d: %d (%d) (%d = %d) %d\\n", d, component, depth_d_node_index, ta_chunk_base, (component % (LITERAL_CHUNKS / TA_CHUNKS_PER_LEAF))*TA_CHUNKS_PER_LEAF, component_remainder);
 					}
 				}
 
@@ -284,13 +284,13 @@ code_update = """
 				int component_output = 1;
 				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF-1; ++ta_chunk) {
 					// Compare the TA state of the component (leaf) against the corresponding part of the feature vector
-					if ((ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] & Xi[ta_chunk_base_index + ta_chunk]) != ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]) {
+					if ((ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] & Xi[ta_chunk_base + ta_chunk]) != ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]) {
 						component_output = 0;
 						break;
 					}
 				}
 
-				if ((ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & Xi[ta_chunk_base_index + TA_CHUNKS_PER_LEAF-1] & FILTER_HIERARCHICAL) != (ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & FILTER_HIERARCHICAL)) {
+				if ((ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & Xi[ta_chunk_base + TA_CHUNKS_PER_LEAF-1] & FILTER_HIERARCHICAL) != (ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & FILTER_HIERARCHICAL)) {
 					component_output = 0;
 				}
 
