@@ -385,7 +385,7 @@ class CommonTsetlinMachine():
 					if (self.hierarchy_structure[d][0] == AND_GROUP):
 						self.evaluate_and_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[d-1], self.hierarchy_votes[d], self.hierarchy_size[d + 1], self.hierarchy_structure[d][1])
 						cuda.Context.synchronize()
-					elif self.hierarchy_structure[d][0] == OR_GROUP):
+					elif self.hierarchy_structure[d][0] == OR_GROUP:
 						self.evaluate_or_groups.prepared_call(self.grid, self.block, self.hierarchy_votes[d-1], self.hierarchy_votes[d], self.hierarchy_size[d + 1], self.hierarchy_structure[d][1])
 						cuda.Context.synchronize()
 					elif self.hierarchy_structure[d][0] == OR_ALTERNATIVES):
