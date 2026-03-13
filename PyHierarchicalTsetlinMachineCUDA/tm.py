@@ -483,7 +483,7 @@ class CommonTsetlinMachine():
 			cuda.Context.synchronize()
 
 			cuda.memcpy_dtoh(class_sum_example, self.class_sum_gpu)
-			class_sum[e,:] = class_sum_example
+			class_sum[:, e] = class_sum_example
 
 		class_sum = np.ascontiguousarray(np.zeros(self.number_of_outputs*number_of_examples)).astype(np.int32)
 		class_sum_gpu = cuda.mem_alloc(class_sum.nbytes)
