@@ -477,6 +477,25 @@ code_update = """
 			}
 		}
 
+		__global__ void propagate_and_group_false_truth_values(int *child_input, int *and_group_node_output, int number_of_and_group_nodes, int number_of_and_group_factors)
+		{
+			int index = blockIdx.x * blockDim.x + threadIdx.x;
+			int stride = blockDim.x * gridDim.x;
+
+			// Multiply the votes from the children of each AND node
+			for (int and_group_node = index; and_group_node < CLAUSES*number_of_and_group_nodes; and_group_node += stride) {
+				// Multiply and factors
+
+				if (and_group_node_output[and_group_node] == 0) {
+					for (int and_factor = 0; and_factor < number_of_and_group_factors; ++and_factor) {
+						if (child_input[and_group_node*number_of_and_group_factors + and_factor] == 1) {
+							child_input[and_group_node*number_of_and_group_factors + and_factor] = 0;	
+						}
+					}
+				}
+			}
+		}
+
 		__global__ void evaluate_or_alternatives(int *child_input, int *or_alternatives_node_output, int number_of_or_alternatives_nodes, int number_of_or_alternatives)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;

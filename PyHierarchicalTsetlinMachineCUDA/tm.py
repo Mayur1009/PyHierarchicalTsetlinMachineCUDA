@@ -346,6 +346,9 @@ class CommonTsetlinMachine():
 			self.evaluate_and_groups = mod_update.get_function("evaluate_and_groups")
 			self.evaluate_and_groups.prepare("PPii")
 
+			self.propagate_and_group_false_truth_values = mod_update.get_function("propagate_and_group_false_truth_values")
+			self.propagate_and_group_false_truth_values.prepare("PPii")
+
 			self.evaluate_or_groups = mod_update.get_function("evaluate_or_groups")
 			self.evaluate_or_groups.prepare("PPii")
 
