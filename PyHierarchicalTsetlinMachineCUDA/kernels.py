@@ -486,7 +486,7 @@ code_update = """
 			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
 				if (group_node_output[group_node] == 0) {
 					for (int and_factor = 0; and_factor < number_of_group_node_children; ++and_factor) {
-						if (child_input[group_node*number_of_group_node_children + and_factor] == 1) {
+						if (child_input[group_node*number_of_group_node_children + and_factor] > 0) {
 							child_input[group_node*number_of_group_node_children + and_factor] = 0;	
 						}
 					}
