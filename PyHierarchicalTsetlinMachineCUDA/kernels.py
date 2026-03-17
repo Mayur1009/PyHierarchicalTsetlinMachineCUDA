@@ -251,7 +251,7 @@ code_update = """
 				} else if (target*sign < 0 && component_output) {
 					// Type II Feedback
 
-					for (int ta_chunk = 0; ta_chunk < TA_CHUNKS; ++ta_chunk) {
+					for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
 						inc(ta_state, 0, ta_chunk, (~X[ta_chunk]) & (~ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]));
 					}
 				}
