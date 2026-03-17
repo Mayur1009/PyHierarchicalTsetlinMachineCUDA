@@ -866,12 +866,44 @@ code_prepare = """
 				}
 
 				unsigned int *ta_state = &global_ta_state[clause*TA_CHUNKS*STATE_BITS];
-				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS-1; ++ta_chunk) {
+				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS; ++ta_chunk) {
 					for (int b = 0; b < STATE_BITS-1; ++b) {
 						ta_state[ta_chunk*STATE_BITS + b] = ~0;
 					}
 					ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] = 0;
 				}
+			}
+
+			state[index] = localState;
+		}
+
+		__global__ void prepare_hierarchy(curandState *state, unsigned int *global_ta_state, int *clause_weights, int *class_sum)
+		{
+			int index = blockIdx.x * blockDim.x + threadIdx.x;
+			int stride = blockDim.x * gridDim.x;
+
+			curandState localState = state[index];
+
+			// Evaluate each clause component (leaf) in separate threads
+			for (int clause_component = index; clause_component < CLAUSES*COMPONENTS; clause_component += stride) {
+				// Get state of current clause component
+				unsigned int *ta_state = &global_ta_state[clause_component*TA_CHUNKS_PER_LEAF*STATE_BITS];
+				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
+					for (int b = 0; b < STATE_BITS-1; ++b) {
+						ta_state[ta_chunk*STATE_BITS + b] = ~0;
+					}
+					ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] = 0;
+				}
+			}
+
+			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
+				for (unsigned long long class_id = 0; class_id < CLASSES; ++class_id) {
+					#if NEGATIVE_CLAUSES == 1
+						clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (curand(&localState) % 2);
+					#else
+						clause_weights[class_id*CLAUSES + clause] = 1;
+					#endif
+				}				
 			}
 
 			state[index] = localState;

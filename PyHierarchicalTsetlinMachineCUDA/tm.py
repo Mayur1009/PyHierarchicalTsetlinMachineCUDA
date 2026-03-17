@@ -312,10 +312,14 @@ class CommonTsetlinMachine():
 			print(parameters)
 			mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
 			self.prepare = mod_prepare.get_function("prepare")
+			self.prepare_hierarchy = mod_prepare.get_function("prepare_hierarchy")
 
 			self.allocate_gpu_memory(number_of_examples)
 
-			self.prepare(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			#self.prepare(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			#cuda.Context.synchronize()
+
+			self.prepare_hierarchy(g.state, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 			mod_update = SourceModule(parameters + kernels.code_header + kernels.code_update, no_extern_c=True)
