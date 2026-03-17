@@ -430,6 +430,9 @@ class CommonTsetlinMachine():
 				self.update.prepared_call(self.grid, self.block, g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, self.Y_gpu, np.int32(e))
 				cuda.Context.synchronize()
 
+				self.update_hierarchy.prepared_call(self.grid, self.block, g.state, self.ta_state_gpu, self.clause_weights_gpu, self.hierarchy_votes[0], self.depth, self.hierarchy_structure_factors_gpu, self.hierarchy_structure_alternatives_gpu, self.class_sum_gpu, self.encoded_X_hierarchy_training_gpu, self.Y_gpu, np.int32(e))
+				cuda.Context.synchronize()
+
 		self.ta_state = np.array([])
 		self.clause_weights = np.array([])
 		
