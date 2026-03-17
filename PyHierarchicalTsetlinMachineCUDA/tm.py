@@ -322,8 +322,6 @@ class CommonTsetlinMachine():
 			self.update = mod_update.get_function("update")
 			self.update.prepare("PPPPPPi")
 
-		__global__ void update_weights(curandState *state, int *clause_weights, int *clause_output, int *class_sum, int *y, int example)
-
 			self.update_weights = mod_update.get_function("update_weights")
 			self.update_weights.prepare("PPPPPi")
 
