@@ -75,7 +75,7 @@ class CommonTsetlinMachine():
 				self.hierarchy_structure_alternatives[d-1] = 1 
 
 		print("HIERARCHY STRUCTURE FACTORS", self.hierarchy_structure_factors)
-		print("HIERARCHY STRUCTURE alternatives", self.hierarchy_structure_alternatives)
+		print("HIERARCHY STRUCTURE ALTERNATIVES", self.hierarchy_structure_alternatives)
 
 		self.number_of_features = 1
 		for d in range(self.depth - 1, -1, -1):
@@ -321,6 +321,9 @@ class CommonTsetlinMachine():
 			mod_update = SourceModule(parameters + kernels.code_header + kernels.code_update, no_extern_c=True)
 			self.update = mod_update.get_function("update")
 			self.update.prepare("PPPPPPi")
+
+			self.update_hierarchy = mod_update.get_function("update_hierarchy")
+			self.update_hierarchy.prepare("PPPPiPPPPPi")
 
 			self.update_weights = mod_update.get_function("update_weights")
 			self.update_weights.prepare("PPPPPi")
