@@ -184,7 +184,7 @@ code_update = """
 			}
 		}
 
-		__device__ inline void update_clause_weights(curandState *localState, int *clause_weight, int clause_output, int y, int class_sum)
+		__device__ inline void update_clause_weight(curandState *localState, int *clause_weight, int clause_output, int y, int class_sum)
 		{
 			int target = 1 - 2*(class_sum > y);
 			
@@ -745,7 +745,7 @@ code_update = """
 					} else if (local_class_sum < -THRESHOLD) {
 						local_class_sum = -THRESHOLD;
 					}
-					update_clause_weights(&localState, &clause_weights[class_id*CLAUSES + clause], clause_output[clause], y[example*CLASSES + class_id], local_class_sum);
+					update_clause_weight(&localState, &clause_weights[class_id*CLAUSES + clause], clause_output[clause], y[example*CLASSES + class_id], local_class_sum);
 				}
 			}
 		
