@@ -754,7 +754,7 @@ code_update = """
 
 					int sign = (clause_weights[class_id*CLAUSES + clause] >= 0) - (clause_weights[class_id*CLAUSES + clause] < 0);
 				
-					int absolute_prediction_error = abs(y[example*CLASSES + class_id] - class_sum);
+					int absolute_prediction_error = abs(y[example*CLASSES + class_id] - class_sum[class_id]);
 					if (curand_uniform(&localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
 						if (target*sign > 0) {
 							if (clause_output[clause] && abs(clause_weights[class_id*CLAUSES + clause]) < INT_MAX) {
