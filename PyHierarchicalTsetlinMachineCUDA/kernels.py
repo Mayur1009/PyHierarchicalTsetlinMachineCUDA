@@ -700,6 +700,8 @@ code_update = """
 
 				if (component_output[clause_component] != clause_output[clause]) {
 					printf("ERROR!\\n");
+				} else {
+					printf("CORRECT\\n");
 				}
 
 				// Get state of current clause component
