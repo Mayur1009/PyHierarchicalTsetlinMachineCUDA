@@ -745,6 +745,55 @@ code_update = """
 					} else if (local_class_sum < -THRESHOLD) {
 						local_class_sum = -THRESHOLD;
 					}
+
+					int target = 1 - 2*(local_class_sum > y);
+			
+					if (target == -1 && curand_uniform(&localState) > 1.0*Q/max(1, CLASSES-1)) {
+						continue;
+					}
+
+					int sign = (clause_weights[class_id*CLAUSES + clause] >= 0) - (clause_weights[class_id*CLAUSES + clause] < 0);
+				
+					int absolute_prediction_error = abs(y[example*CLASSES + class_id] - class_sum);
+					if (curand_uniform(&localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+						if (target*sign > 0) {
+							if (clause_output[clause] && abs(*clause_weight) < INT_MAX) {
+								clause_weights[class_id*CLAUSES + clause] += sign;
+							}
+						} else if (target*sign < 0 && clause_output[clause]) {
+							// Type II Feedback
+
+							clause_weights[class_id*CLAUSES + clause] -= sign;
+							#if NEGATIVE_CLAUSES == 0
+								if (clause_weights[class_id*CLAUSES + clause] < 1) {
+									clause_weights[class_id*CLAUSES + clause] = 1;
+								}
+							#endif
+						}
+					}
+				}
+			}
+		
+			state[index] = localState;
+		}
+
+		// Update state of Tsetlin Automata team
+		__global__ void update_weights_old(curandState *state, int *clause_weights, int *clause_output, int *class_sum, int *y, int example)
+		{
+			int index = blockIdx.x * blockDim.x + threadIdx.x;
+			int stride = blockDim.x * gridDim.x;
+
+			/* Copy state to local memory for efficiency */  
+			curandState localState = state[index];
+
+			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
+				for (unsigned long long class_id = 0; class_id < CLASSES; ++class_id) {
+					int local_class_sum = class_sum[class_id];
+					if (local_class_sum > THRESHOLD) {
+						local_class_sum = THRESHOLD;
+					} else if (local_class_sum < -THRESHOLD) {
+						local_class_sum = -THRESHOLD;
+					}
 					update_clause_weight(&localState, &clause_weights[class_id*CLAUSES + clause], clause_output[clause], y[example*CLASSES + class_id], local_class_sum);
 				}
 			}
