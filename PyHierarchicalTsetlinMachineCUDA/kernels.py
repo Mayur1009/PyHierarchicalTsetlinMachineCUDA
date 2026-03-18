@@ -699,7 +699,7 @@ code_update = """
 				int component = clause_component % COMPONENTS;
 
 				if (component_output[clause_component] != clause_output[clause]) {
-					printf("ERROR! %d=%d %d=%d\\n", clause_component, component_output[clause_component] clause, clause_output[clause]);
+					printf("ERROR! %d=%d %d=%d\\n", clause_component, component_output[clause_component], clause, clause_output[clause]);
 				}
 
 				// Get state of current clause component
