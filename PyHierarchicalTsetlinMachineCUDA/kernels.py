@@ -792,6 +792,28 @@ code_update = """
 					}
 					
 					update_clause(&localState, &clause_weights[class_id*CLAUSES + clause], ta_state, clause_output, clause_patch, &X[(unsigned long long)example*(TA_CHUNKS*PATCHES)], y[example*CLASSES + class_id], local_class_sum);
+
+					int *Xi_hierarchy = &X_hierarcy[(unsigned long long)example*LITERAL_CHUNKS];
+
+					for (int component = 0; component < COMPONENTS; ++component) {
+						// Get state of current clause component
+						unsigned int *ta_state_hierarchy = &global_ta_state_hierarchy[clause_component*TA_CHUNKS_PER_LEAF*STATE_BITS];
+
+						int component_remainder = component;
+						int ta_chunk_base = 0;
+						int size = 1;
+						for (int d = 0; d < depth-1; ++d) {
+							int depth_d_node_index = component_remainder % hierarchy_structure_factors[d];
+							component_remainder = component_remainder / hierarchy_structure_factors[d];
+
+							if (hierarchy_structure_alternatives[d] == 0) {
+								ta_chunk_base += size * depth_d_node_index * TA_CHUNKS_PER_LEAF;
+								size *= hierarchy_structure_factors[d];
+							}
+						}
+
+						update_component_hierarchy(&localState, &clause_weights[class_id*CLAUSES + clause], ta_state_hierarchy, component_output[clause_component], &Xi_hierarchy[ta_chunk_base], y[example*CLASSES + class_id], local_class_sum);
+					}
 				}	
 			}
 		
