@@ -495,8 +495,8 @@ class CommonTsetlinMachine():
 
 			cuda.memcpy_htod(self.class_sum_gpu, class_sum_example)
 			
-			#self.convert_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
-			#cuda.Context.synchronize()
+			self.convert_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
+			cuda.Context.synchronize()
 
 			#self.compare_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
 			#cuda.Context.synchronize()
