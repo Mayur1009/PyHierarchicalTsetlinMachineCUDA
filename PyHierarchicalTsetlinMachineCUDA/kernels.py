@@ -797,7 +797,7 @@ code_update = """
 
 					for (int component = 0; component < COMPONENTS; ++component) {
 						// Get state of current clause component
-						unsigned int *ta_state_hierarchy = &global_ta_state_hierarchy[clause_component*TA_CHUNKS_PER_LEAF*STATE_BITS];
+						unsigned int *ta_state_hierarchy = &global_ta_state_hierarchy[component*TA_CHUNKS_PER_LEAF*STATE_BITS];
 
 						int component_remainder = component;
 						int ta_chunk_base = 0;
@@ -812,7 +812,7 @@ code_update = """
 							}
 						}
 
-						update_component_hierarchy(&localState, &clause_weights[class_id*CLAUSES + clause], ta_state_hierarchy, component_output[clause_component], &Xi_hierarchy[ta_chunk_base], y[example*CLASSES + class_id], local_class_sum);
+						update_component_hierarchy(&localState, &clause_weights[class_id*CLAUSES + clause], ta_state_hierarchy, component_output[component], &Xi_hierarchy[ta_chunk_base], y[example*CLASSES + class_id], local_class_sum);
 					}
 				}	
 			}
