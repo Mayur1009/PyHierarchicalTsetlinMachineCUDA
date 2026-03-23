@@ -526,7 +526,10 @@ code_update = """
 				int or_group_vote_sum = 0;
 				for (int or_addend = 0; or_addend < number_of_or_group_addends; ++or_addend) {
 					// Aggregate votes from each child node through addition
-					or_group_vote_sum += child_input[or_group_node*number_of_or_group_addends + or_addend];
+					//or_group_vote_sum += child_input[or_group_node*number_of_or_group_addends + or_addend];
+					if (child_input[or_group_node*number_of_or_group_addends + or_addend]) {
+						or_group_vote_sum = 1; 
+					}
 				}
 
 				// Store or group vote sum as node output
