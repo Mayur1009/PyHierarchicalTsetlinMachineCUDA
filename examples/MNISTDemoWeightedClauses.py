@@ -8,7 +8,7 @@ factor = 1
 
 s = 20.0
 
-T = int(factor*50*10)*4
+T = int(factor*50*10)*256
 
 ensembles = 10
 epochs = 250
