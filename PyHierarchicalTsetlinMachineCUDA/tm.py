@@ -81,7 +81,7 @@ class CommonTsetlinMachine():
 		self.number_of_features_hierarchy = 1
 		for d in range(self.depth - 1, -1, -1):
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
-				self.number_of_features.number_of_features_hierarchy *= self.hierarchy_structure[d][1]
+				self.number_of_features_hierarchy *= self.hierarchy_structure[d][1]
 
 		print("NUMBER OF FEATURES", self.number_of_features_hierarchy)
 
