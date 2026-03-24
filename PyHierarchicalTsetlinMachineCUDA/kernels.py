@@ -1088,7 +1088,7 @@ code_encode = """
 			}
 		}
 
-		__global__ void encode_compare(unsigned int *X, unsigned int *encoded_X, unsigned int *encoded_X_hierarchy, int number_of_ta_chunks, int number_of_literals, int number_of_literal_chunks, int number_of_leaves, int number_of_literals_per_leaf, int number_of_literal_chunks_per_leaf, int number_of_examples)
+		__global__ void encode_compare(unsigned int *X, unsigned int *encoded_X, unsigned int *encoded_X_hierarchy, int number_of_ta_chunks, int number_of_features, int number_of_literal_chunks, int number_of_leaves, int number_of_features_per_leaf, int number_of_literal_chunks_per_leaf, int number_of_examples)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -1098,39 +1098,39 @@ code_encode = """
 			unsigned int *Xi;
 
 			if (index == 0) {
-				printf("Number of literals: %d\\n", number_of_literals);
+				printf("Number of features: %d\\n", number_of_features);
 				printf("Number of literal chunks: %d\\n", number_of_literal_chunks);
 				printf("Number of leaves: %d\\n", number_of_leaves);
-				printf("Number of literals per leaf: %d\\n", number_of_literals_per_leaf);
+				printf("Number of features per leaf: %d\\n", number_of_features_per_leaf);
 			}
 
 			for (unsigned long long i = index; i < number_of_examples; i += stride) {
 				encoded_Xi = &encoded_X[i*number_of_ta_chunks];
 				encoded_Xi_hierarchy = &encoded_X_hierarchy[i*number_of_literal_chunks];
-				Xi = &X[i*number_of_literals];
+				Xi = &X[i*number_of_features];
 
-				for (int j = 0; j < number_of_literals / number_of_literals_per_leaf; ++j) {
-					for (int k = 0; k < number_of_literals_per_leaf; ++k) {
-						int literal = j*number_of_literals_per_leaf + k;
-						int literal_chunk_nr = literal / 32;
-						int literal_chunk_pos = literal % 32;
+				for (int j = 0; j < number_of_features / number_of_features_per_leaf; ++j) {
+					for (int k = 0; k < number_of_features_per_leaf; ++k) {
+						int feature = j*number_of_feature_per_leaf + k;
+						int feature_chunk_nr = feature / 32;
+						int feature_chunk_pos = feature % 32;
 
 						int leaf_chunk_nr = k / 32;
 						int leaf_chunk_pos = k % 32;
 
 						if (
-							((encoded_Xi[literal_chunk_nr] & (1 << literal_chunk_pos)) > 0)
+							((encoded_Xi[feature_chunk_nr] & (1 << feature_chunk_pos)) > 0)
 							!=
 							((encoded_Xi_hierarchy[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] & (1 << leaf_chunk_pos)) > 0)
 						) {
-							if (Xi[j*number_of_literals_per_leaf + k] != 
+							if (Xi[j*number_of_features_per_leaf + k] != 
 								((encoded_Xi_hierarchy[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] & (1 << leaf_chunk_pos)) > 0)
 							) {
 								printf("HIERARCHY ENCODING ERROR\\n");
 							}
 
-							if (Xi[j*number_of_literals_per_leaf + k] != 
-								((encoded_Xi[literal_chunk_nr] & (1 << literal_chunk_pos)) > 0)
+							if (Xi[j*number_of_features_per_leaf + k] != 
+								((encoded_Xi[feature_chunk_nr] & (1 << feature_chunk_pos)) > 0)
 							) {
 								printf("FLAT ENCODING ERROR\\n");
 							}
