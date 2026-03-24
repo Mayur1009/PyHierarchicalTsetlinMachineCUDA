@@ -1,7 +1,7 @@
 from PyHierarchicalTsetlinMachineCUDA.tm import MultiClassTsetlinMachine
 import numpy as np
 from time import time
-import PyHierarchicalTsetlinMachineCUDA.tm
+import PyHierarchicalTsetlinMachineCUDA.tm as tm
 
 ensembles = 10
 epochs = 4000
