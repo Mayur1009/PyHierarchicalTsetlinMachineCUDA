@@ -162,8 +162,8 @@ class CommonTsetlinMachine():
 		self.encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features_hierarchy), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
-		self.encode_compare(X_hierarchical_gpu, encoded_X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_ta_chunks), np.int32(self.number_of_literals), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(number_of_examples), grid=self.grid, block=self.block)
-		cuda.Context.synchronize()
+		#self.encode_compare(X_gpu, encoded_X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_ta_chunks), np.int32(self.number_of_literals), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(number_of_examples), grid=self.grid, block=self.block)
+		#cuda.Context.synchronize()
 
 	def allocate_gpu_memory(self, number_of_examples):
 		# GPU memory for accumulating votes, level by level
