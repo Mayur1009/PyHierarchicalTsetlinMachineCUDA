@@ -1109,7 +1109,7 @@ code_encode = """
 				encoded_Xi_hierarchy = &encoded_X_hierarchy[i*number_of_literal_chunks];
 				Xi = &X[i*number_of_literals];
 
-				for (int j = 0; j < number_of_leaves; ++j) {
+				for (int j = 0; j < number_of_literals / number_of_literals_per_leaf; ++j) {
 					for (int k = 0; k < number_of_literals_per_leaf; ++k) {
 						int literal = j*number_of_literals_per_leaf + k;
 						int literal_chunk_nr = literal / 32;
@@ -1159,7 +1159,7 @@ code_encode = """
 				Xi = &X[i*number_of_literals];
 				encoded_Xi = &encoded_X[i*number_of_literal_chunks];
 
-				for (int j = 0; j < number_of_leaves; ++j) {
+				for (int j = 0; j < number_of_literals / number_of_literals_per_leaf; ++j) {
 					for (int k = 0; k < number_of_literals_per_leaf; ++k) {
 						int leaf_chunk_nr = k / 32;
 						int leaf_chunk_pos = k % 32;
