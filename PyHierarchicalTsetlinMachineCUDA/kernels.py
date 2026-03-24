@@ -1134,7 +1134,32 @@ code_encode = """
 							) {
 								printf("FLAT ENCODING ERROR\\n");
 							}
-						}	
+						}
+
+						int feature = j*number_of_features_per_leaf + k;
+						int feature_chunk_nr = (feature + number_of_features) / 32;
+						int feature_chunk_pos = (feature + number_of_features) % 32;
+
+						int leaf_chunk_nr = (k +  number_of_features_per_leaf) / 32;
+						int leaf_chunk_pos = (k + number_of_features_per_leaf) % 32;
+
+						if (
+							((encoded_Xi[feature_chunk_nr] & (1 << feature_chunk_pos)) > 0)
+							!=
+							((encoded_Xi_hierarchy[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] & (1 << leaf_chunk_pos)) > 0)
+						) {
+							if (Xi[j*number_of_features_per_leaf + k] == 
+								((encoded_Xi_hierarchy[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] & (1 << leaf_chunk_pos)) > 0)
+							) {
+								printf("HIERARCHY ENCODING ERROR\\n");
+							}
+
+							if (Xi[j*number_of_features_per_leaf + k] == 
+								((encoded_Xi[feature_chunk_nr] & (1 << feature_chunk_pos)) > 0)
+							) {
+								printf("FLAT ENCODING ERROR\\n");
+							}
+						}
 					}
 				}
 			}
