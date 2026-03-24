@@ -1140,7 +1140,7 @@ code_encode = """
 			}
 		}
 
-		__global__ void encode_hierarchy(unsigned int *X, unsigned int *encoded_X, int number_of_literals, int number_of_literal_chunks, int number_of_leaves, int number_of_literals_per_leaf, int number_of_literal_chunks_per_leaf, int number_of_examples)
+		__global__ void encode_hierarchy(unsigned int *X, unsigned int *encoded_X, int number_of_features, int number_of_literal_chunks, int number_of_leaves, int number_of_features_per_leaf, int number_of_literal_chunks_per_leaf, int append_negated, int number_of_examples)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -1149,23 +1149,26 @@ code_encode = """
 			unsigned int *encoded_Xi;
 
 			if (index == 0) {
-				printf("Number of literals: %d\\n", number_of_literals);
+				printf("Number of features: %d\\n", number_of_features);
 				printf("Number of literal chunks: %d\\n", number_of_literal_chunks);
 				printf("Number of leaves: %d\\n", number_of_leaves);
-				printf("Number of literals per leaf: %d\\n", number_of_literals_per_leaf);
+				printf("Number of features per leaf: %d\\n", number_of_features_per_leaf);
+				printf("Append negated: %d\\n", append_negated);
 			}
 
 			for (unsigned long long i = index; i < number_of_examples; i += stride) {
-				Xi = &X[i*number_of_literals];
+				Xi = &X[i*number_of_features];
 				encoded_Xi = &encoded_X[i*number_of_literal_chunks];
 
-				for (int j = 0; j < number_of_literals / number_of_literals_per_leaf; ++j) {
-					for (int k = 0; k < number_of_literals_per_leaf; ++k) {
-						int leaf_chunk_nr = k / 32;
-						int leaf_chunk_pos = k % 32;
-
+				for (int j = 0; j < number_of_features / number_of_features_per_leaf; ++j) {
+					for (int k = 0; k < number_of_features_per_leaf; ++k) {
 						if (Xi[j*number_of_literals_per_leaf + k] == 1) {
+							int leaf_chunk_nr = k / 32;
+							int leaf_chunk_pos = k % 32;
 							encoded_Xi[j*number_of_literal_chunks_per_leaf + leaf_chunk_nr] |= (1 << leaf_chunk_pos);
+						} else if (append_negated) {
+							int leaf_chunk_nr = (k + number_of_features_per_leaf) / 32;
+							int leaf_chunk_pos = (k + number_of_features_per_leaf) % 32;
 						}
 					}
 				}

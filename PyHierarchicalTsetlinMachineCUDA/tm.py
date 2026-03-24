@@ -85,9 +85,10 @@ class CommonTsetlinMachine():
 
 		print("NUMBER OF FEATURES", self.number_of_features)
 
+		self.number_of_features_per_leaf = self.hierarchy_structure[0][1]
 		if self.append_negated:
 			self.number_of_literals = self.number_of_features * 2
-			self.number_of_literals_per_leaf = self.hierarchy_structure[0][1]*2
+			self.number_of_literals_per_leaf = self.number_of_features_per_leaf * 2
 			self.number_of_literal_chunks_per_leaf = int((self.number_of_literals_per_leaf - 1) / 32 + 1)
 		else:
 			self.number_of_literals = self.number_of_features
@@ -145,13 +146,6 @@ class CommonTsetlinMachine():
 		X_gpu = cuda.mem_alloc(Xm.nbytes)
 		cuda.memcpy_htod(X_gpu, Xm)
 
-		if self.append_negated:
-			Xm_hierarchical = np.ascontiguousarray(np.hstack((X, 1 - X)).flatten()).astype(np.uint32)
-		else:
-			Xm_hierarchical = np.ascontiguousarray(X.flatten()).astype(np.uint32)
-		X_hierarchical_gpu = cuda.mem_alloc(Xm_hierarchical.nbytes)
-		cuda.memcpy_htod(X_hierarchical_gpu, Xm_hierarchical)
-
 		if self.append_negated:			
 			self.prepare_encode(X_gpu, encoded_X_gpu, np.int32(number_of_examples), np.int32(self.dim[0]), np.int32(self.dim[1]), np.int32(self.dim[2]), np.int32(self.patch_dim[0]), np.int32(self.patch_dim[1]), np.int32(1), np.int32(0), grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
@@ -165,10 +159,10 @@ class CommonTsetlinMachine():
 
 		self.prepare_encode_hierarchy(X_hierarchical_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literal_chunks), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()	
-		self.encode_hierarchy(X_hierarchical_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literals), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_literals_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(number_of_examples), grid=self.grid, block=self.block)
+		self.encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
-		self.encode_compare(X_hierarchical_gpu, encoded_X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_ta_chunks), np.int32(self.number_of_literals), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_literals_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(number_of_examples), grid=self.grid, block=self.block)
+		self.encode_compare(X_hierarchical_gpu, encoded_X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_ta_chunks), np.int32(self.number_of_literals), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
 	def allocate_gpu_memory(self, number_of_examples):
