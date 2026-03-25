@@ -248,8 +248,8 @@ class CommonTsetlinMachine():
 		encoded_X_hierarchy_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
 		Y_gpu = cuda.mem_alloc(encoded_Y.nbytes)
 
-		self.encode_X(X, self.encoded_X_hierarchy_training_gpu)
-		cuda.memcpy_htod(self.Y_gpu, encoded_Y)
+		self.encode_X(X, encoded_X_hierarchy_training_gpu)
+		cuda.memcpy_htod(Y_gpu, encoded_Y)
 
 		for epoch in range(epochs):
 			for e in range(number_of_examples):
