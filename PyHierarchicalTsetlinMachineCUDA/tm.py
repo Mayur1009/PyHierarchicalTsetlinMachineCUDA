@@ -222,6 +222,13 @@ class CommonTsetlinMachine():
 	def transform(self, X):
 		None # To be updated
 
+	def initialize_weights_and_ta_states(self):
+		self.prepare_weights(g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+		cuda.Context.synchronize()
+
+		self.prepare_hierarchy(g.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+		cuda.Context.synchronize()
+
 	def _fit(self, X, encoded_Y, epochs=100, incremental=False):
 		number_of_examples = X.shape[0]
 
@@ -229,20 +236,12 @@ class CommonTsetlinMachine():
 			# Allocates memory and prepares weights and Tsetlin automata states on first run 
 			self.allocate_gpu_memory()
 
-			self.prepare_weights(g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
-			cuda.Context.synchronize()
-
-			self.prepare_hierarchy(g.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
-			cuda.Context.synchronize()
+			self.initialize_weights_and_ta_states()
 
 			self.first = False
 		elif not incremental:
 			# Re-initializes weights and Tsetlin automata states if training is not incremental
-			self.prepare_weights(g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
-			cuda.Context.synchronize()
-
-			self.prepare_hierarchy(g.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
-			cuda.Context.synchronize()
+			self.initialize_weights_and_ta_states()
 
 		# Allocates GPU memory for training data
 		encoded_X_hierarchy_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
