@@ -228,18 +228,18 @@ class CommonTsetlinMachine():
 		if self.first:
 			self.allocate_gpu_memory()
 
-			self.prepare_weights(g.state, self.number_of_outputs, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_weights(g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
-			self.prepare_hierarchy(g.state, self.number_of_outputs, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_hierarchy(g.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 			self.first = False
 		elif incremental:
-			self.prepare_weights(g.state, self.number_of_outputs, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_weights(g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
-			self.prepare_hierarchy(g.state, self.number_of_outputs, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_hierarchy(g.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 		self.encoded_X_hierarchy_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
@@ -270,21 +270,21 @@ class CommonTsetlinMachine():
 						printf("Unknown node type!")
 						sys.exit()
 
-				self.evaluate_final.prepared_call(self.grid, self.block, self.number_of_outputs, self.hierarchy_votes[self.depth-1], self.clause_weights_gpu, self.class_sum_gpu)
+				self.evaluate_final.prepared_call(self.grid, self.block, np.int32(self.number_of_outputs), self.hierarchy_votes[self.depth-1], self.clause_weights_gpu, self.class_sum_gpu)
 				cuda.Context.synchronize()
 
 				for d in range(self.depth-1, 0, -1):
 					self.propagate_and_group_false_truth_values.prepared_call(self.grid, self.block, self.hierarchy_votes[d-1], self.hierarchy_votes[d], self.hierarchy_size[d + 1], self.hierarchy_structure[d][1])
 					cuda.Context.synchronize()
 
-				self.update_weights.prepared_call(self.grid, self.block, g.state, self.number_of_outputs, self.clause_weights_gpu, self.hierarchy_votes[self.depth-1], self.class_sum_gpu, self.Y_gpu, np.int32(e))
+				self.update_weights.prepared_call(self.grid, self.block, g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.hierarchy_votes[self.depth-1], self.class_sum_gpu, self.Y_gpu, np.int32(e))
 				cuda.Context.synchronize()
 
 				self.update_hierarchy.prepared_call(
 					self.grid,
 					self.block,
 					g.state,
-					self.number_of_outputs,
+					np.int32(self.number_of_outputs),
 					self.ta_state_hierarchy_gpu,
 					self.clause_weights_gpu,
 					self.hierarchy_votes[0],
@@ -334,7 +334,7 @@ class CommonTsetlinMachine():
 					printf("Unknown node type!")
 					sys.exit()
 			
-			self.evaluate_final.prepared_call(self.grid, self.block, self.number_of_outputs, self.hierarchy_votes[self.depth-1], self.clause_weights_gpu, self.class_sum_gpu)
+			self.evaluate_final.prepared_call(self.grid, self.block, np.int32(self.number_of_outputs), self.hierarchy_votes[self.depth-1], self.clause_weights_gpu, self.class_sum_gpu)
 			cuda.Context.synchronize()
 
 			cuda.memcpy_dtoh(class_sum_example, self.class_sum_gpu)
