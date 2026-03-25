@@ -371,8 +371,8 @@ class CommonTsetlinMachine():
 	def _score(self, X):
 		number_of_examples = X.shape[0]
 		
-		self.encoded_X_hierarchy_test_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
-		self.encode_X(X, self.encoded_X_hierarchy_test_gpu)
+		encoded_X_hierarchy_test_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
+		self.encode_X(X, encoded_X_hierarchy_test_gpu)
 
 		class_sum = np.ascontiguousarray(np.zeros((self.number_of_outputs, number_of_examples))).astype(np.int32)
 		class_sum_example = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
