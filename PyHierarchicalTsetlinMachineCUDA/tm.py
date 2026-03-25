@@ -334,7 +334,7 @@ class CommonTsetlinMachine():
 					self.clause_weights_gpu,
 					self.hierarchy_votes[self.depth-1],
 					self.class_sum_gpu,
-					self.Y_gpu,
+					Y_gpu,
 					np.int32(e)
 				)
 				cuda.Context.synchronize()
