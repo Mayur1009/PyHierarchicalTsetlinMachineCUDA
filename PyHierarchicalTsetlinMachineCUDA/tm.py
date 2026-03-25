@@ -245,11 +245,8 @@ class CommonTsetlinMachine():
 			self.prepare_hierarchy(g.state, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
-		if (not np.array_equal(self.X_train, X)) or (not np.array_equal(self.encoded_Y_train, encoded_Y)):
-			self.X_train = X
-			self.encoded_Y_train = encoded_Y
-			self.encode_X(X, self.encoded_X_hierarchy_training_gpu)
-			cuda.memcpy_htod(self.Y_gpu, encoded_Y)
+		self.encode_X(X, self.encoded_X_hierarchy_training_gpu)
+		cuda.memcpy_htod(self.Y_gpu, encoded_Y)
 
 		for epoch in range(epochs):
 			for e in range(number_of_examples):
