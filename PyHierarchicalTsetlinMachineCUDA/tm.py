@@ -99,7 +99,6 @@ class CommonTsetlinMachine():
 
 	def cuda_modules(self):
 		parameters = """
-	#define CLASSES %d
 	#define CLAUSES %d
 	#define DEPTH %d
 	#define COMPONENTS %d
@@ -113,9 +112,7 @@ class CommonTsetlinMachine():
 	#define Q %f
 
 	#define NEGATIVE_CLAUSES %d
-
-	#define NUMBER_OF_EXAMPLES %d
-		""" % (self.number_of_outputs, self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.negative_clauses, number_of_examples)
+		""" % (self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.negative_clauses)
 		
 		mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
 		self.prepare_weights = mod_prepare.get_function("prepare_weights")
@@ -123,19 +120,19 @@ class CommonTsetlinMachine():
 
 		self.allocate_gpu_memory(number_of_examples)
 
-		self.prepare_weights(g.state, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+		self.prepare_weights(g.state, self.number_of_outputs, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
-		self.prepare_hierarchy(g.state, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+		self.prepare_hierarchy(g.state, self.number_of_outputs, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
 		mod_update = SourceModule(parameters + kernels.code_header + kernels.code_update, no_extern_c=True)
 		
 		self.update_hierarchy = mod_update.get_function("update_hierarchy")
-		self.update_hierarchy.prepare("PPPPiPPPPPi")
+		self.update_hierarchy.prepare("PiPPPiPPPPPi")
 
 		self.update_weights = mod_update.get_function("update_weights")
-		self.update_weights.prepare("PPPPPi")
+		self.update_weights.prepare("PiPPPPi")
 
 		self.evaluate_leaves = mod_update.get_function("evaluate_leaves")
 		self.evaluate_leaves.prepare("PPPiPPPi")
@@ -237,10 +234,10 @@ class CommonTsetlinMachine():
 		number_of_examples = X.shape[0]
 
 		if incremental == False:
-			self.prepare_weights(g.state, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_weights(g.state, self.number_of_outputs, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
-			self.prepare_hierarchy(g.state, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_hierarchy(g.state, self.number_of_outputs, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 		self.encoded_X_hierarchy_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
@@ -278,13 +275,14 @@ class CommonTsetlinMachine():
 					self.propagate_and_group_false_truth_values.prepared_call(self.grid, self.block, self.hierarchy_votes[d-1], self.hierarchy_votes[d], self.hierarchy_size[d + 1], self.hierarchy_structure[d][1])
 					cuda.Context.synchronize()
 
-				self.update_weights.prepared_call(self.grid, self.block, g.state, self.clause_weights_gpu, self.hierarchy_votes[self.depth-1], self.class_sum_gpu, self.Y_gpu, np.int32(e))
+				self.update_weights.prepared_call(self.grid, self.block, g.state, self.number_of_outputs, self.clause_weights_gpu, self.hierarchy_votes[self.depth-1], self.class_sum_gpu, self.Y_gpu, np.int32(e))
 				cuda.Context.synchronize()
 
 				self.update_hierarchy.prepared_call(
 					self.grid,
 					self.block,
 					g.state,
+					self.number_of_outputs,
 					self.ta_state_hierarchy_gpu,
 					self.clause_weights_gpu,
 					self.hierarchy_votes[0],
