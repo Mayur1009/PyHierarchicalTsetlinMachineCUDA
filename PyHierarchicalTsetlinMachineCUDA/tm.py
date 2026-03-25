@@ -102,7 +102,7 @@ class CommonTsetlinMachine():
 		self.prepare_encode_hierarchy = mod_encode.get_function("prepare_encode_hierarchy")
 		self.encode_hierarchy = mod_encode.get_function("encode_hierarchy")
 
-	def encode_X(self, X, encoded_X_gpu, encoded_X_hierarchy_gpu):
+	def encode_X(self, X, encoded_X_hierarchy_gpu):
 		number_of_examples = X.shape[0]
 
 		# Allocates GPU memory for input data
@@ -170,40 +170,7 @@ class CommonTsetlinMachine():
 
 	# Transform input data for processing at next layer
 	def transform(self, X):
-		number_of_examples = X.shape[0]
-		
-		encoded_X_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_patches * self.number_of_ta_chunks*4))
-		self.encode_X(X, encoded_X_gpu, encoded_X_gpu)
-
-		#encoded_X_hierarchy_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_ta_chunks*4))
-		#self.encoded_X_hierarchy_gpu(X, encoded_X_hierarchy_gpu)
-
-		parameters = """
-#define CLASSES %d
-#define CLAUSES %d
-#define FEATURES %d
-#define STATE_BITS %d
-#define BOOST_TRUE_POSITIVE_FEEDBACK %d
-#define S %f
-#define THRESHOLD %d
-
-#define NEGATIVE_CLAUSES %d
-
-#define PATCHES %dULL
-
-#define NUMBER_OF_EXAMPLES %d
-		""" % (self.number_of_outputs, self.number_of_clauses, self.number_of_features, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.negative_clauses, self.number_of_patches, number_of_examples)
-
-		mod = SourceModule(parameters + kernels.code_header + kernels.code_transform, no_extern_c=True)
-		transform = mod.get_function("transform")
-
-		X_transformed_gpu = cuda.mem_alloc(number_of_examples*self.number_of_clauses*4)
-		transform(self.ta_state_gpu, encoded_X_gpu, X_transformed_gpu, grid=self.grid, block=self.block)
-		cuda.Context.synchronize()
-		X_transformed = np.ascontiguousarray(np.empty(number_of_examples*self.number_of_clauses, dtype=np.uint32))
-		cuda.memcpy_dtoh(X_transformed, X_transformed_gpu)
-		
-		return X_transformed.reshape((number_of_examples, self.number_of_clauses))
+		None # To be updated
 
 	def _fit(self, X, encoded_Y, epochs=100, incremental=False):
 		number_of_examples = X.shape[0]
@@ -268,7 +235,6 @@ class CommonTsetlinMachine():
 			self.evaluate_or_alternatives = mod_update.get_function("evaluate_or_alternatives")
 			self.evaluate_or_alternatives.prepare("PPii")
 
-			self.encoded_X_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_patches * self.number_of_ta_chunks*4))
 			self.encoded_X_hierarchy_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
 			self.Y_gpu = cuda.mem_alloc(encoded_Y.nbytes)
 		
@@ -282,7 +248,7 @@ class CommonTsetlinMachine():
 		if (not np.array_equal(self.X_train, X)) or (not np.array_equal(self.encoded_Y_train, encoded_Y)):
 			self.X_train = X
 			self.encoded_Y_train = encoded_Y
-			self.encode_X(X, self.encoded_X_training_gpu, self.encoded_X_hierarchy_training_gpu)
+			self.encode_X(X, self.encoded_X_hierarchy_training_gpu)
 			cuda.memcpy_htod(self.Y_gpu, encoded_Y)
 
 		for epoch in range(epochs):
@@ -345,10 +311,9 @@ class CommonTsetlinMachine():
 		if not np.array_equal(self.X_test, X):
 			self.X_test = X
 
-			self.encoded_X_test_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_patches * self.number_of_ta_chunks*4))
 			self.encoded_X_hierarchy_test_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
 			print("ALLOCATING TEST", number_of_examples * self.number_of_literal_chunks * 4, number_of_examples, self.number_of_literal_chunks, 4)
-			self.encode_X(X, self.encoded_X_test_gpu, self.encoded_X_hierarchy_test_gpu)
+			self.encode_X(X, self.encoded_X_hierarchy_test_gpu)
 
 		class_sum = np.ascontiguousarray(np.zeros((self.number_of_outputs, number_of_examples))).astype(np.int32)
 		class_sum_example = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
