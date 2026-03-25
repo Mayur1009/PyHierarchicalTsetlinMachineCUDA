@@ -97,6 +97,8 @@ class CommonTsetlinMachine():
 		self.cuda_modules()
 		self.allocate_gpu_memory()
 
+		self.first = True
+
 	def cuda_modules(self):
 		parameters = """
 	#define CLAUSES %d
@@ -118,14 +120,7 @@ class CommonTsetlinMachine():
 		self.prepare_weights = mod_prepare.get_function("prepare_weights")
 		self.prepare_hierarchy = mod_prepare.get_function("prepare_hierarchy")
 
-		self.prepare_weights(g.state, self.number_of_outputs, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
-		cuda.Context.synchronize()
-
-		self.prepare_hierarchy(g.state, self.number_of_outputs, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
-		cuda.Context.synchronize()
-
-		mod_update = SourceModule(parameters + kernels.code_header + kernels.code_update, no_extern_c=True)
-		
+		mod_update = SourceModule(parameters + kernels.code_header + kernels.code_update, no_extern_c=True)		
 		self.update_hierarchy = mod_update.get_function("update_hierarchy")
 		self.update_hierarchy.prepare("PiPPPiPPPPPi")
 
@@ -231,12 +226,14 @@ class CommonTsetlinMachine():
 	def _fit(self, X, encoded_Y, epochs=100, incremental=False):
 		number_of_examples = X.shape[0]
 
-		if incremental == False:
+		if incremental == False or self.first:
 			self.prepare_weights(g.state, self.number_of_outputs, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 			self.prepare_hierarchy(g.state, self.number_of_outputs, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
+
+			self.first = False
 
 		self.encoded_X_hierarchy_training_gpu = cuda.mem_alloc(int(number_of_examples * self.number_of_literal_chunks * 4))
 		self.Y_gpu = cuda.mem_alloc(encoded_Y.nbytes)
