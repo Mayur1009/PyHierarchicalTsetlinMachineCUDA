@@ -95,7 +95,7 @@ class CommonTsetlinMachine():
 				self.number_of_literal_chunks *= self.hierarchy_structure[d][1]
 
 		self.cuda_modules()
-
+		self.allocate_gpu_memory()
 
 	def cuda_modules(self):
 		parameters = """
@@ -117,8 +117,6 @@ class CommonTsetlinMachine():
 		mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
 		self.prepare_weights = mod_prepare.get_function("prepare_weights")
 		self.prepare_hierarchy = mod_prepare.get_function("prepare_hierarchy")
-
-		self.allocate_gpu_memory(number_of_examples)
 
 		self.prepare_weights(g.state, self.number_of_outputs, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
@@ -174,7 +172,7 @@ class CommonTsetlinMachine():
 		self.encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features_hierarchy), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
-	def allocate_gpu_memory(self, number_of_examples):
+	def allocate_gpu_memory(self):
 		# GPU memory for accumulating votes, level by level
 		self.hierarchy_votes = []
 		for d in range(1, self.depth):
