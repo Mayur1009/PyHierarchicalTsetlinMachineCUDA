@@ -33,6 +33,12 @@ code_header = """
 	#else
 	#define FILTER_HIERARCHICAL 0xffffffff
 	#endif
+
+	#define VANILLA_TM 0
+
+	#define WEIGHTED_TM 1
+
+	#define COALESCED_TM 2
 """
 
 code_update = """
@@ -81,7 +87,7 @@ code_update = """
 			} 
 		}
 
-		__device__ inline void update_clause_weight(curandState *localState, int number_of_outputs, int *clause_weight, int clause_output, int y, int class_sum)
+		__device__ inline void update_clause_weight(curandState *localState, int tm_type, int number_of_outputs, int *clause_weight, int clause_output, int y, int class_sum)
 		{
 			int target = 1 - 2*(class_sum > y);
 			
@@ -100,7 +106,7 @@ code_update = """
 				} else if (target*sign < 0 && clause_output) {
 					// Type II Feedback
 
-					if (*clause_weight < -1 || *clause_weight > 1) {
+					if (*clause_weight < -1 || *clause_weight > 1 || tm_type == COALESCED_TM) {
 						(*clause_weight) -= sign;
 					}
 
@@ -354,7 +360,7 @@ code_update = """
 		}
 
 		// Update state of Tsetlin Automata team
-		__global__ void update_weights(curandState *state, int number_of_outputs, int *clause_weights, int *clause_output, int *class_sum, int *y, int example)
+		__global__ void update_weights(curandState *state, int tm_type, int number_of_outputs, int *clause_weights, int *clause_output, int *class_sum, int *y, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -370,7 +376,7 @@ code_update = """
 					} else if (local_class_sum < -THRESHOLD) {
 						local_class_sum = -THRESHOLD;
 					}
-					update_clause_weight(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause], y[example*number_of_outputs + class_id], local_class_sum);
+					update_clause_weight(&localState, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause], y[example*number_of_outputs + class_id], local_class_sum);
 				}
 			}
 		
@@ -382,7 +388,7 @@ code_update = """
 code_prepare = """
 	extern "C"
     {
-		__global__ void prepare_weights(curandState *state, int number_of_outputs, int *clause_weights, int *class_sum)
+		__global__ void prepare_weights(curandState *state, int tm_type, int number_of_outputs, int *clause_weights, int *class_sum)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -392,8 +398,15 @@ code_prepare = """
 			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
 				for (unsigned long long class_id = 0; class_id < number_of_outputs; ++class_id) {
 					#if NEGATIVE_CLAUSES == 1
-						//clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (curand(&localState) % 2);
-						clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (clause % 2);
+						if (tm_type == COALESCED_TM) {
+							clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (curand(&localState) % 2);
+						} else {
+							if (class_id*CLAUSES <= clause && clause < (class_id+1)*CLAUSES) {
+								clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (clause % 2);
+							} else {
+								clause_weights[class_id*CLAUSES + clause] = 0;
+							}
+						}
 					#else
 						clause_weights[class_id*CLAUSES + clause] = 1;
 					#endif

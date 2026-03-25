@@ -36,11 +36,15 @@ OR_GROUP = "OR a group of children"
 OR_ALTERNATIVES = "Create multiple OR alternatives for a sub hierarchy"
 AND_GROUP = "AND a group of children"
 
+VANILLA_TM = 0
+WEIGHTED_TM = 1
+COALESCED_TM = 2
+
 g = curandom.XORWOWRandomNumberGenerator() 
 
 class CommonTsetlinMachine():
 
-	def __init__(self, number_of_clauses, T, s, q=1.0, hierarchy_structure=None, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
+	def __init__(self, number_of_clauses, T, s, tm_type=VANILLA_TM, q=1.0, hierarchy_structure=None, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
 		self.number_of_clauses = number_of_clauses
 		self.number_of_state_bits = number_of_state_bits
 		self.T = int(T)
@@ -124,7 +128,7 @@ class CommonTsetlinMachine():
 		self.update_hierarchy.prepare("PiPPPiPPPPPi")
 
 		self.update_weights = mod_update.get_function("update_weights")
-		self.update_weights.prepare("PiPPPPi")
+		self.update_weights.prepare("PiiPPPPi")
 
 		self.evaluate_leaves = mod_update.get_function("evaluate_leaves")
 		self.evaluate_leaves.prepare("PPPiPPPi")
@@ -223,7 +227,7 @@ class CommonTsetlinMachine():
 		None # To be updated
 
 	def initialize_weights_and_ta_states(self):
-		self.prepare_weights(g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+		self.prepare_weights(g.state, np.int32(self.tm_type), np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
 
 		self.prepare_hierarchy(g.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
@@ -354,18 +358,20 @@ class CommonTsetlinMachine():
 				cuda.Context.synchronize()
 
 				# Updates the clause weights
-				self.update_weights.prepared_call(
-					self.grid,
-					self.block,
-					g.state,
-					np.int32(self.number_of_outputs),
-					self.clause_weights_gpu,
-					self.hierarchy_votes[self.depth-1],
-					self.class_sum_gpu,
-					Y_gpu,
-					np.int32(e)
-				)
-				cuda.Context.synchronize()
+				if (self.tm_type in [WEIGHTED_TM, COALESCED_TM]):
+					self.update_weights.prepared_call(
+						self.grid,
+						self.block,
+						g.state,
+						np.int32(self.tm_type),
+						np.int32(self.number_of_outputs),
+						self.clause_weights_gpu,
+						self.hierarchy_votes[self.depth-1],
+						self.class_sum_gpu,
+						Y_gpu,
+						np.int32(e)
+					)
+					cuda.Context.synchronize()
 		return
        
 	def _score(self, X):
@@ -414,9 +420,9 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 		return (self.score(X) >= 0).astype(np.uint32).transpose()
 
 class MultiClassTsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, hierarchy_structure=((AND_GROUP, 1)), q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
+	def __init__(self, number_of_clauses, T, s, tm_type=VANILLA_TM, hierarchy_structure=((AND_GROUP, 1)), q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
 		self.negative_clauses = 1
-		super().__init__(number_of_clauses, T, s, hierarchy_structure=hierarchy_structure, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
+		super().__init__(number_of_clauses, T, s, tm_type=tm_type, hierarchy_structure=hierarchy_structure, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
