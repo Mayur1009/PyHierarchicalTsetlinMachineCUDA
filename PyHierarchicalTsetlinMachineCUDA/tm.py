@@ -235,7 +235,7 @@ class CommonTsetlinMachine():
 			cuda.Context.synchronize()
 
 			self.first = False
-		elif incremental:
+		elif not incremental:
 			self.prepare_weights(g.state, np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
