@@ -218,7 +218,6 @@ class CommonTsetlinMachine():
 	#define COMPONENTS %d
 	#define LITERALS_PER_LEAF %d
 	#define TA_CHUNKS_PER_LEAF %d
-	#define FEATURES %d
 	#define LITERAL_CHUNKS %d
 	#define STATE_BITS %d
 	#define BOOST_TRUE_POSITIVE_FEEDBACK %d
@@ -228,10 +227,8 @@ class CommonTsetlinMachine():
 
 	#define NEGATIVE_CLAUSES %d
 
-	#define PATCHES %d
-
 	#define NUMBER_OF_EXAMPLES %d
-""" % (self.number_of_outputs, self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_features, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.negative_clauses, self.number_of_patches, number_of_examples)
+""" % (self.number_of_outputs, self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.negative_clauses, number_of_examples)
 		
 			mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
 			self.prepare_weights = mod_prepare.get_function("prepare_weights")
