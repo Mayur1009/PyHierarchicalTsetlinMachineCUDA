@@ -121,26 +121,27 @@ class CommonTsetlinMachine():
 
 		self.prepare_encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literal_chunks), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()	
+		
 		self.encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features_hierarchy), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples), grid=self.grid, block=self.block)
 		cuda.Context.synchronize()
-		
+
 	def allocate_gpu_memory(self, number_of_examples):
 		# GPU memory for accumulating votes, level by level
 		self.hierarchy_votes = []
 		for d in range(1, self.depth):
-			print("Hierarchy size", d-1, self.number_of_clauses, int(self.hierarchy_size[d]), 4)
 			self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*int(self.hierarchy_size[d])*4))
-		print("Hierarchy size", self.depth-1, self.number_of_clauses, int(self.hierarchy_size[self.depth-1]), 4)
 		self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*4))
 
+		# GPU memory for storing hierarchy structure
 		self.hierarchy_structure_factors_gpu = cuda.mem_alloc((self.depth-1)*4)
 		cuda.memcpy_htod(self.hierarchy_structure_factors_gpu, np.array(self.hierarchy_structure_factors, dtype=np.int32))
 
+		# GPU memory for storing hierarchy structure
 		self.hierarchy_structure_alternatives_gpu = cuda.mem_alloc((self.depth-1)*4)
 		cuda.memcpy_htod(self.hierarchy_structure_alternatives_gpu, np.array(self.hierarchy_structure_alternatives, dtype=np.int32))
 
+		# GPU memory for storing Tsetlin Automata states
 		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
-		self.ta_state_gpu = cuda.mem_alloc(self.number_of_clauses*self.number_of_ta_chunks*self.number_of_state_bits*4)
 		self.clause_weights_gpu = cuda.mem_alloc(self.number_of_outputs*self.number_of_clauses*4)
 		self.component_weights_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[1]*4) # Only positive weights...
 		self.class_sum_gpu = cuda.mem_alloc(self.number_of_outputs*4)
@@ -270,7 +271,7 @@ class CommonTsetlinMachine():
 
 			self.allocate_gpu_memory(number_of_examples)
 
-			self.prepare_weights(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_weights(g.state, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 			self.prepare_hierarchy(g.state, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
@@ -323,7 +324,10 @@ class CommonTsetlinMachine():
 			self.Y_gpu = cuda.mem_alloc(encoded_Y.nbytes)
 		
 		if incremental == False:
-			self.prepare_weights(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_weights(g.state, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			cuda.Context.synchronize()
+
+			self.prepare_hierarchy(g.state, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 		if (not np.array_equal(self.X_train, X)) or (not np.array_equal(self.encoded_Y_train, encoded_Y)):
@@ -336,12 +340,6 @@ class CommonTsetlinMachine():
 			for e in range(number_of_examples):
 				class_sum = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
 				cuda.memcpy_htod(self.class_sum_gpu, class_sum)
-
-				#self.convert_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
-				#cuda.Context.synchronize()
-
-				#self.compare_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
-				#cuda.Context.synchronize()
 
 				self.evaluate_leaves.prepared_call(self.grid, self.block, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.depth, self.hierarchy_structure_factors_gpu, self.hierarchy_structure_alternatives_gpu, self.encoded_X_hierarchy_training_gpu, np.int32(e))
 				cuda.Context.synchronize()
@@ -366,18 +364,6 @@ class CommonTsetlinMachine():
 				for d in range(self.depth-1, 0, -1):
 					self.propagate_and_group_false_truth_values.prepared_call(self.grid, self.block, self.hierarchy_votes[d-1], self.hierarchy_votes[d], self.hierarchy_size[d + 1], self.hierarchy_structure[d][1])
 					cuda.Context.synchronize()
-				
-				#self.evaluate_leaves_compare.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.encoded_X_hierarchy_training_gpu, self.encoded_X_training_gpu, np.int32(e))
-				#cuda.Context.synchronize()
-
-				#class_sum = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
-				#cuda.memcpy_htod(self.class_sum_gpu, class_sum)
-
-				#self.evaluate_update_compare.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e), self.hierarchy_votes[1])
-				#cuda.Context.synchronize()
-
-				#self.evaluate_update.prepared_call(self.grid, self.block, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, self.encoded_X_training_gpu, np.int32(e))
-				#cuda.Context.synchronize()
 
 				self.update_weights.prepared_call(self.grid, self.block, g.state, self.clause_weights_gpu, self.hierarchy_votes[self.depth-1], self.class_sum_gpu, self.Y_gpu, np.int32(e))
 				cuda.Context.synchronize()
@@ -441,12 +427,6 @@ class CommonTsetlinMachine():
 			class_sum_example[:] = 0
 
 			cuda.memcpy_htod(self.class_sum_gpu, class_sum_example)
-			
-			#self.convert_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
-			#cuda.Context.synchronize()
-
-			#self.compare_ta_states.prepared_call(self.grid, self.block, self.ta_state_gpu, self.ta_state_hierarchy_gpu)
-			#cuda.Context.synchronize()
 
 			self.evaluate_leaves.prepared_call(self.grid, self.block, self.ta_state_hierarchy_gpu, self.component_weights_gpu, self.hierarchy_votes[0], self.depth, self.hierarchy_structure_factors_gpu, self.hierarchy_structure_alternatives_gpu, self.encoded_X_hierarchy_test_gpu, np.int32(e))
 			cuda.Context.synchronize()
@@ -470,14 +450,6 @@ class CommonTsetlinMachine():
 
 			cuda.memcpy_dtoh(class_sum_example, self.class_sum_gpu)
 			class_sum[:, e] = class_sum_example
-
-		#class_sum = np.ascontiguousarray(np.zeros(self.number_of_outputs*number_of_examples)).astype(np.int32)
-		#class_sum_gpu = cuda.mem_alloc(class_sum.nbytes)
-		#cuda.memcpy_htod(class_sum_gpu, class_sum)
-
-		#self.evaluate(self.ta_state_gpu, self.clause_weights_gpu, class_sum_gpu, self.encoded_X_test_gpu, grid=self.grid, block=self.block)
-		#cuda.Context.synchronize()
-		#cuda.memcpy_dtoh(class_sum, class_sum_gpu)
 		
 		class_sum = np.clip(class_sum.reshape((self.number_of_outputs, number_of_examples)), -self.T, self.T)
 
