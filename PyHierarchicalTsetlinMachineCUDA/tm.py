@@ -342,64 +342,10 @@ class CommonTsetlinMachine():
 
 		return class_sum
 	
-class MultiClassConvolutionalTsetlinMachine2D(CommonTsetlinMachine):
-	"""
-	This class ...
-	"""
-	
-	def __init__(self, number_of_clauses, T, s, patch_dim, q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
-		super().__init__(number_of_clauses, T, s, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
-		self.patch_dim = patch_dim
-		self.negative_clauses = 1
-
-	def fit(self, X, Y, epochs=100, incremental=False):
-		self.number_of_outputs = int(np.max(Y) + 1)
-	
-		self.max_y = None
-		self.min_y = None
-		
-		encoded_Y = np.empty((Y.shape[0], self.number_of_outputs), dtype = np.int32)
-		for i in range(self.number_of_outputs):
-			encoded_Y[:,i] = np.where(Y == i, self.T, -self.T)
-
-		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
-
-	def score(self, X):
-		return self._score(X)
-
-	def predict(self, X):
-		return np.argmax(self.score(X), axis=0)
-
-class MultiOutputConvolutionalTsetlinMachine2D(CommonTsetlinMachine):
-	"""
-	This class ...
-	"""
-	
-	def __init__(self, number_of_clauses, T, s, patch_dim, q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
-		super().__init__(number_of_clauses, T, s, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
-		self.patch_dim = patch_dim
-		self.negative_clauses = 1
-
-	def fit(self, X, Y, epochs=100, incremental=False):
-		self.number_of_outputs = Y.shape[1]
-
-		self.max_y = None
-		self.min_y = None
-		
-		encoded_Y = np.where(Y == 1, self.T, -self.T).astype(np.int32)
-
-		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
-
-	def score(self, X):
-		return self._score(X)
-
-	def predict(self, X):
-		return (self.score(X) >= 0).astype(np.uint32).transpose()
-
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 	def __init__(self, number_of_clauses, T, s, q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
-		super().__init__(number_of_clauses, T, s, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 		self.negative_clauses = 1
+		super().__init__(number_of_clauses, T, s, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -424,8 +370,8 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 
 class MultiClassTsetlinMachine(CommonTsetlinMachine):
 	def __init__(self, number_of_clauses, T, s, hierarchy_structure=((AND_GROUP, 1)), q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
-		super().__init__(number_of_clauses, T, s, hierarchy_structure=hierarchy_structure, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 		self.negative_clauses = 1
+		super().__init__(number_of_clauses, T, s, hierarchy_structure=hierarchy_structure, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -453,8 +399,8 @@ class MultiClassTsetlinMachine(CommonTsetlinMachine):
 
 class TsetlinMachine(CommonTsetlinMachine):
 	def __init__(self, number_of_clauses, T, s, q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
-		super().__init__(number_of_clauses, T, s, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 		self.negative_clauses = 1
+		super().__init__(number_of_clauses, T, s, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -480,8 +426,8 @@ class TsetlinMachine(CommonTsetlinMachine):
 
 class RegressionTsetlinMachine(CommonTsetlinMachine):
 	def __init__(self, number_of_clauses, T, s, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
-		super().__init__(number_of_clauses, T, s, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 		self.negative_clauses = 0
+		super().__init__(number_of_clauses, T, s, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
