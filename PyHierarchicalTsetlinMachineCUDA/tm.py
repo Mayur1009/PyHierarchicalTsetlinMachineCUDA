@@ -350,25 +350,6 @@ class CommonTsetlinMachine():
 			print("ALLOCATING TEST", number_of_examples * self.number_of_literal_chunks * 4, number_of_examples, self.number_of_literal_chunks, 4)
 			self.encode_X(X, self.encoded_X_test_gpu, self.encoded_X_hierarchy_test_gpu)
 
-			parameters = """
-#define CLASSES %d
-#define CLAUSES %d
-#define FEATURES %d
-#define STATE_BITS %d
-#define BOOST_TRUE_POSITIVE_FEEDBACK %d
-#define S %f
-#define THRESHOLD %d
-
-#define NEGATIVE_CLAUSES %d
-
-#define PATCHES %d
-
-#define NUMBER_OF_EXAMPLES %d
-		""" % (self.number_of_outputs, self.number_of_clauses, self.number_of_features, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.negative_clauses, self.number_of_patches, number_of_examples)
-
-			mod = SourceModule(parameters + kernels.code_header + kernels.code_evaluate, no_extern_c=True)
-			self.evaluate = mod.get_function("evaluate")
-
 		class_sum = np.ascontiguousarray(np.zeros((self.number_of_outputs, number_of_examples))).astype(np.int32)
 		class_sum_example = np.ascontiguousarray(np.zeros(self.number_of_outputs)).astype(np.int32)
 

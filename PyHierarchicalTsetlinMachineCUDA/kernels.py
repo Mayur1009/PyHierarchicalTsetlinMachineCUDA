@@ -39,10 +39,10 @@ code_update = """
 	extern "C"
     {
     	// Increment the states of each of those 32 Tsetlin Automata flagged in the active bit vector.
-		__device__ inline void inc(unsigned int *ta_state, int clause, int chunk, unsigned int active)
+		__device__ inline void inc(unsigned int *ta_state, int chunk, unsigned int active)
 		{
 			unsigned int carry, carry_next;
-			int id = clause*TA_CHUNKS*STATE_BITS + chunk*STATE_BITS;
+			int id = chunk*STATE_BITS;
 			carry = active;
 			for (int b = 0; b < STATE_BITS; ++b) {
 				if (carry == 0)
@@ -61,10 +61,10 @@ code_update = """
 		}
 
 		// Decrement the states of each of those 32 Tsetlin Automata flagged in the active bit vector.
-		__device__ inline void dec(unsigned int *ta_state, int clause, int chunk, unsigned int active)
+		__device__ inline void dec(unsigned int *ta_state, int chunk, unsigned int active)
 		{
 			unsigned int carry, carry_next;
-			int id = clause*TA_CHUNKS*STATE_BITS + chunk*STATE_BITS;
+			int id = chunk*STATE_BITS;
 			carry = active;
 			for (int b = 0; b < STATE_BITS; ++b) {
 				if (carry == 0)
@@ -79,42 +79,6 @@ code_update = """
 					ta_state[id + b] &= ~carry;
 				}
 			} 
-		}
-
-		__device__ inline void calculate_clause_output(curandState *localState, unsigned int *ta_state, unsigned int *clause_output, int *clause_patch, int *X)
-		{
-			int output_one_patches[PATCHES];
-			int output_one_patches_count;
-
-			// Evaluate each patch (convolution)
-			output_one_patches_count = 0;
-			for (int patch = 0; patch < PATCHES; ++patch) {
-				int patch_clause_output = 1;
-				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS-1; ++ta_chunk) {
-					if ((ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] & X[patch*TA_CHUNKS + ta_chunk]) != ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]) {
-						patch_clause_output = 0;
-						break;
-					}
-				}
-
-				if (((ta_state[(TA_CHUNKS-1)*STATE_BITS + STATE_BITS - 1] & X[patch*TA_CHUNKS + TA_CHUNKS - 1] & FILTER) != (ta_state[(TA_CHUNKS-1)*STATE_BITS + STATE_BITS - 1] & FILTER))) {
-					patch_clause_output = 0;
-				}
-
-				if (patch_clause_output) {
-					output_one_patches[output_one_patches_count] = patch;
-					output_one_patches_count++;
-				}
-			}
-		
-			if (output_one_patches_count > 0) {
-				*clause_output = 1;
-				int patch_id = curand(localState) % output_one_patches_count;
-				*clause_patch = output_one_patches[patch_id];
-			} else {
-				*clause_output = 0;
-				*clause_patch = -1;
-			}
 		}
 
 		__device__ inline void update_clause_weight(curandState *localState, int *clause_weight, int clause_output, int y, int class_sum)
@@ -175,21 +139,21 @@ code_update = """
 
 						if (component_output) {
 							#if BOOST_TRUE_POSITIVE_FEEDBACK == 1
-								inc(ta_state, 0, ta_chunk, X[ta_chunk]);
+								inc(ta_state, ta_chunk, X[ta_chunk]);
 							#else
-								inc(ta_state, 0, ta_chunk, X[ta_chunk] & (~la_feedback));
+								inc(ta_state, ta_chunk, X[ta_chunk] & (~la_feedback));
 							#endif
 
-							dec(ta_state, 0, ta_chunk, (~X[ta_chunk]) & la_feedback);
+							dec(ta_state, ta_chunk, (~X[ta_chunk]) & la_feedback);
 						} else {
-							dec(ta_state, 0, ta_chunk, la_feedback);
+							dec(ta_state, ta_chunk, la_feedback);
 						}
 					}
 				} else if (target*sign < 0 && component_output) {
 					// Type II Feedback
 
 					for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
-						inc(ta_state, 0, ta_chunk, (~X[ta_chunk]) & (~ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]));
+						inc(ta_state, ta_chunk, (~X[ta_chunk]) & (~ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]));
 					}
 				}
 			}
@@ -413,66 +377,6 @@ code_update = """
 			state[index] = localState;
 		}
     }
-"""
-
-code_evaluate = """
-	extern "C"
-    {
-		// Evaluate examples
-		__global__ void evaluate(unsigned int *global_ta_state, int *clause_weights, int *class_sum, int *X)
-		{
-			int index = blockIdx.x * blockDim.x + threadIdx.x;
-			int stride = blockDim.x * gridDim.x;
-
-			for (int clause = index; clause < CLAUSES; clause += stride) {
-				unsigned int *ta_state = &global_ta_state[clause*TA_CHUNKS*STATE_BITS];
-
-				int all_exclude = 1;
-				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS-1; ++ta_chunk) {
-					if (ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] > 0) {
-						all_exclude = 0;
-						break;
-					}
-				}
-
-			/*	if ((ta_state[(TA_CHUNKS-1)*STATE_BITS + STATE_BITS - 1] & FILTER) > 0) {
-					all_exclude = 0;
-				}
-
-				if (all_exclude) {
-					continue;
-				}*/
-
-				for (unsigned long long e = 0; e < NUMBER_OF_EXAMPLES; ++e) {
-					int clause_output;
-					for (int patch = 0; patch < PATCHES; ++patch) {
-						clause_output = 1;
-						for (int ta_chunk = 0; ta_chunk < TA_CHUNKS-1; ++ta_chunk) {
-							if ((ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] & X[e*(TA_CHUNKS*PATCHES) + patch*TA_CHUNKS + ta_chunk]) != ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]) {
-								clause_output = 0;
-								break;
-							}
-						}
-
-						if ((ta_state[(TA_CHUNKS-1)*STATE_BITS + STATE_BITS - 1] & X[e*(TA_CHUNKS*PATCHES) + patch*TA_CHUNKS + TA_CHUNKS-1] & FILTER) != (ta_state[(TA_CHUNKS-1)*STATE_BITS + STATE_BITS - 1] & FILTER)) {
-							clause_output = 0;
-						}
-
-						if (clause_output) {
-							break;
-						}
-					}
-
-					if (clause_output) {
-						for (int class_id = 0; class_id < CLASSES; ++class_id) {
-							int clause_weight = clause_weights[class_id*CLAUSES + clause];
-							atomicAdd(&class_sum[class_id*NUMBER_OF_EXAMPLES + e], clause_weight);					
-						}
-					}
-				}
-			}
-		}
-	}
 """
 
 code_prepare = """
