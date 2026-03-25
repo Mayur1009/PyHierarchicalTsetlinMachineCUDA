@@ -770,7 +770,7 @@ code_evaluate = """
 code_prepare = """
 	extern "C"
     {
-		__global__ void prepare(curandState *state, unsigned int *global_ta_state, int *clause_weights, int *class_sum)
+		__global__ void prepare_weights(curandState *state, unsigned int *global_ta_state, int *clause_weights, int *class_sum)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -785,14 +785,6 @@ code_prepare = """
 					#else
 						clause_weights[class_id*CLAUSES + clause] = 1;
 					#endif
-				}
-
-				unsigned int *ta_state = &global_ta_state[clause*TA_CHUNKS*STATE_BITS];
-				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS; ++ta_chunk) {
-					for (int b = 0; b < STATE_BITS-1; ++b) {
-						ta_state[ta_chunk*STATE_BITS + b] = ~0;
-					}
-					ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] = 0;
 				}
 			}
 

@@ -306,12 +306,12 @@ class CommonTsetlinMachine():
 			print("NUMBER OF LITERAL CHUNKS", self.number_of_literal_chunks)
 			print(parameters)
 			mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
-			self.prepare = mod_prepare.get_function("prepare")
+			self.prepare_weights = mod_prepare.get_function("prepare_weights")
 			self.prepare_hierarchy = mod_prepare.get_function("prepare_hierarchy")
 
 			self.allocate_gpu_memory(number_of_examples)
 
-			self.prepare(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_weights(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 			self.prepare_hierarchy(g.state, self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
@@ -364,7 +364,7 @@ class CommonTsetlinMachine():
 			self.Y_gpu = cuda.mem_alloc(encoded_Y.nbytes)
 		
 		if incremental == False:
-			self.prepare(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+			self.prepare_weights(g.state, self.ta_state_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
 			cuda.Context.synchronize()
 
 		if (not np.array_equal(self.X_train, X)) or (not np.array_equal(self.encoded_Y_train, encoded_Y)):
