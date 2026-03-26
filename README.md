@@ -14,6 +14,56 @@ python ./setup.py sdist
 pip install dist/pyhierarchicaltsetlinmachinecuda-0.2.0.tar.gz 
 ```
 
+## Examples
+
+### Noisy Parity Demo
+
+#### Code: NoisyParityDemo.py
+
+```python
+from PyHierarchicalTsetlinMachineCUDA.tm import MultiClassTsetlinMachine
+import numpy as np
+from time import time
+import PyHierarchicalTsetlinMachineCUDA.tm as tm
+
+train_data = np.loadtxt("./examples/NoisyParityTrainingData.txt").astype(np.uint32)
+X_train = train_data[:,0:-1]
+Y_train = train_data[:,-1]
+
+test_data = np.loadtxt("./examples/NoisyParityTestingData.txt").astype(np.uint32)
+X_test = test_data[:,0:-1]
+Y_test = test_data[:,-1]
+
+tm = MultiClassTsetlinMachine(32, 1500, 30.1, tm_type=tm.VANILLA_TM, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, 10), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
+
+print("\nAccuracy over 500 epochs:\n")
+for i in range(500):
+	start_training = time()
+	tm.fit(X_train, Y_train, epochs=10, incremental=True)
+	stop_training = time()
+
+	start_testing = time()
+	result = 100*(tm.predict(X_test) == Y_test).mean()
+	stop_testing = time()
+
+	print("#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (i+1, result, stop_training-start_training, stop_testing-start_testing))
+```
+
+#### Output
+
+```bash
+python ./examples/NoisyParityData.py
+python ./examples/NoisyParityDemo.py
+
+#1 Accuracy: 58.54% Training: 22.36s Testing: 1.39s
+#2 Accuracy: 61.03% Training: 22.40s Testing: 1.39s
+#3 Accuracy: 72.43% Training: 22.42s Testing: 1.39s
+...
+#88 Accuracy: 99.87% Training: 24.39s Testing: 1.51s
+#89 Accuracy: 99.38% Training: 24.40s Testing: 1.52s
+#90 Accuracy: 99.94% Training: 24.39s Testing: 1.52s
+```
+
 ## Licence
 
 MIT License
