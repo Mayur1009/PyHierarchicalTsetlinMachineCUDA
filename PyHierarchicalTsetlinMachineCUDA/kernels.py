@@ -357,9 +357,7 @@ code_update = """
 						local_class_sum = -THRESHOLD;
 					}
 
-					if (clause_weights[class_id*CLAUSES + clause] != 0) {
-						update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component], &Xi[ta_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
-					}
+					update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component], &Xi[ta_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
 				}
 			}
 		
@@ -408,11 +406,11 @@ code_prepare = """
 						if (tm_type == COALESCED_TM) {
 							clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (curand(&localState) % 2);
 						} else {
-							if (class_id*CLAUSES/number_of_outputs <= clause && clause < (class_id+1)*CLAUSES/number_of_outputs) {
+							//if (class_id*CLAUSES/number_of_outputs <= clause && clause < (class_id+1)*CLAUSES/number_of_outputs) {
 								clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (clause % 2);
-							} else {
-								clause_weights[class_id*CLAUSES + clause] = 0;
-							}
+							//} else {
+							//	clause_weights[class_id*CLAUSES + clause] = 0;
+							//}
 						}
 					#else
 						clause_weights[class_id*CLAUSES + clause] = 1;
