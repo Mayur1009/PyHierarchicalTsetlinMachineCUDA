@@ -13,9 +13,7 @@ T = 5000
 (X_train, Y_train), (X_test, Y_test) = mnist.load_data()
 
 X_train = np.where(X_train.reshape((X_train.shape[0], 28*28)) > 75, 1, 0)
-Y_train = Y_train
 X_test = np.where(X_test.reshape((X_test.shape[0], 28*28)) > 75, 1, 0)
-Y_test = Y_test
 
 tm = MultiClassTsetlinMachine(clauses, T, s, tm_type=tm.COALESCED_TM, hierarchy_structure=((tm.AND_GROUP, 28*7), (tm.AND_GROUP, 4)))
 
