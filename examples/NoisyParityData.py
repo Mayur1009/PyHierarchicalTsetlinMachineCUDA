@@ -19,7 +19,7 @@ for i in range(number_of_examples):
 	Y_train[i] = set_bit_count % 2
 
 Y_train = np.where(np.random.rand(number_of_examples) <= noise, 1-Y_train, Y_train) # Adds noise
-np.savetxt("NoisyParityTrainingData.txt", np.append(X_train, Y_train.reshape((number_of_examples, 1)), axis=1), fmt='%d')
+np.savetxt("examples/NoisyParityTrainingData.txt", np.append(X_train, Y_train.reshape((number_of_examples, 1)), axis=1), fmt='%d')
 
 X_test = np.random.randint(2, size=(number_of_examples, number_of_features), dtype=np.uint32)
 Y_test = np.zeros(number_of_examples, dtype=np.uint32)
@@ -32,4 +32,4 @@ for i in range(number_of_examples):
 		set_bit_count += X_test[i, j * number_of_features // number_of_variables:j * number_of_features // number_of_variables + 2].sum()
 	Y_test[i] = set_bit_count % 2
 
-np.savetxt("NoisyParityTestingData.txt", np.append(X_test, Y_test.reshape((number_of_examples, 1)), axis=1), fmt='%d')
+np.savetxt("examples/NoisyParityTestingData.txt", np.append(X_test, Y_test.reshape((number_of_examples, 1)), axis=1), fmt='%d')
