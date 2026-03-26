@@ -1,6 +1,13 @@
 # PyHierarchicalTsetlinMachineCUDA
 Implements the Hierarchical Tsetlin Machine in CUDA
 
+## Installation
+
+```bash
+python ./setup.py sdist
+pip install dist/PyHierarchicalTsetlinMachineCUDA-0.2.0.tar.gz 
+```
+
 ## Licence
 
 MIT License
