@@ -18,7 +18,7 @@ pip install dist/pyhierarchicaltsetlinmachinecuda-0.2.0.tar.gz
 
 ### Noisy Parity Demo
 
-#### Code
+#### Code: NoisyParityDemo.py
 
 ```python
 from PyHierarchicalTsetlinMachineCUDA.tm import MultiClassTsetlinMachine
