@@ -170,7 +170,6 @@ code_update = """
 
 			// Evaluate each clause component (leaf) in separate threads
 			for (int clause_component = index; clause_component < CLAUSES*COMPONENTS; clause_component += stride) {
-				int clause = clause_component / COMPONENTS;
 				int component = clause_component % COMPONENTS;
 
 				// Get state of current clause component
