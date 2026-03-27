@@ -1,7 +1,7 @@
 # PyHierarchicalTsetlinMachineCUDA
 Implements the Hierarchical Tsetlin Machine in CUDA
 
-<p align="center">
+<p align="left">
   <img width="70%" src="https://github.com/cair/PyHierarchicalTsetlinMachineCUDA/blob/main/figures/Clause_Plot_Mayur_Shende.png">
 </p>
 
