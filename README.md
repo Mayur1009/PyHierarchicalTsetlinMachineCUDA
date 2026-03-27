@@ -74,6 +74,10 @@ python ./examples/NoisyParityDemo.py
 #90 Accuracy: 99.94% Training: 24.39s Testing: 1.52s
 ```
 
+### Paper
+
+_A Tsetlin Machine for Logical Learning and Reasoning With AND-OR Hierarchies_. Ole-Christoffer Granmo, et al., 2026. (Forthcoming)
+
 ## Licence
 
 MIT License
