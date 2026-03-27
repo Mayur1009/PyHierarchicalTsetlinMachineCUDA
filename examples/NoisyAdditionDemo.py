@@ -8,7 +8,7 @@ number_of_addends = 2
 examples = 10
 
 X_train_integer = np.random.randint(10, size=(examples, number_of_addends))
-Y_train = X_train_integers.sum(axis=0)
+Y_train = X_train_integer.sum(axis=0)
 
 print(X_train_integer)
 print(Y_tain)
