@@ -470,7 +470,7 @@ class MultiClassTsetlinMachine:
 		if not self.configured:
 			self.tms = []
 			for i in range(self.number_of_outputs):
-				self.tms.append(TsetlinMachine(self.number_of_clauses, T, s, hierarchy_structure=self.hierarchy_structure, q=self.q, boost_true_positive_feedback=self.boost_true_positive_feedback, number_of_state_bits=self.number_of_state_bits, append_negated=self.append_negated, grid=self.grid, block=self.block))
+				self.tms.append(TsetlinMachine(self.number_of_clauses, self.T, self.s, hierarchy_structure=self.hierarchy_structure, q=self.q, boost_true_positive_feedback=self.boost_true_positive_feedback, number_of_state_bits=self.number_of_state_bits, append_negated=self.append_negated, grid=self.grid, block=self.block))
 
 			self.configured = True
 		
@@ -497,7 +497,6 @@ class MultiClassTsetlinMachine:
 		return
 
 	def score(self, X):
-
 		class_sums = np.empty((self.number_of_outputs, X.shape[0])).astype(np.int32)
 		for i in range(self.number_of_outputs):
 			class_sums[i,:] = self.tms[i].score(X)
