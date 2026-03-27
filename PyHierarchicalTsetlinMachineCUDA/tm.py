@@ -18,9 +18,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# This code implements the Convolutional Tsetlin Machine from paper arXiv:1905.09688
-# https://arxiv.org/abs/1905.09688
-
 import numpy as np
 
 import PyHierarchicalTsetlinMachineCUDA.kernels as kernels
