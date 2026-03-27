@@ -1,4 +1,4 @@
-from PyHierarchicalTsetlinMachineCUDA.tm import MultiClassTsetlinMachine
+from PyHierarchicalTsetlinMachineCUDA.tm import TsetlinMachine
 import numpy as np
 from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
