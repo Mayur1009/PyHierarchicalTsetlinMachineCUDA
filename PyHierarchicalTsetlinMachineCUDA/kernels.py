@@ -187,10 +187,6 @@ code_update = """
 						ta_chunk_base += size * depth_d_node_index * TA_CHUNKS_PER_LEAF;
 						size *= hierarchy_structure_factors[d];
 					}
-
-					if (clause == -1 && d == depth-2) {
-						printf("%d: %d (%d) (%d = %d) %d\\n", d, component, depth_d_node_index, ta_chunk_base, (component % (LITERAL_CHUNKS / TA_CHUNKS_PER_LEAF))*TA_CHUNKS_PER_LEAF, component_remainder);
-					}
 				}
 
 				// Evaluate clause component
