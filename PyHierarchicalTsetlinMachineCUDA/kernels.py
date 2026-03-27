@@ -110,10 +110,6 @@ code_update = """
 						(*clause_weight) -= sign;
 					}
 
-					if (tm_type == COALESCED_TM && *clause_weight == 0) {
-						(*clause_weight) -= sign;
-					}
-
 					#if NEGATIVE_CLAUSES == 0
 						if (*clause_weight < 1) {
 							*clause_weight = 1;
@@ -357,9 +353,7 @@ code_update = """
 						local_class_sum = -THRESHOLD;
 					}
 
-					if (clause_weights[class_id*CLAUSES + clause] != 0) {
-						update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component], &Xi[ta_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
-					}
+					update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component], &Xi[ta_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
 				}
 			}
 		
