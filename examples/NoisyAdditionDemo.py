@@ -11,7 +11,7 @@ X_train_integer = np.random.randint(10, size=(examples, number_of_addends))
 Y_train = X_train_integer.sum(axis=0)
 
 print(X_train_integer)
-print(Y_tain)
+print(Y_train)
 
 tm = TsetlinMachine(32, 3000, 30.1, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 10), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 10), (tm.AND_GROUP, 1)))
 
