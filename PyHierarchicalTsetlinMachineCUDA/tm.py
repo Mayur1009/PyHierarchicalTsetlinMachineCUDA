@@ -481,7 +481,7 @@ class MultiClassTsetlinMachine:
 				target_X = X[Y==i]
 				target_Y = np.ones(target_X.shape[0])
 
-				not_target_X = X[X!=i]
+				not_target_X = X[Y!=i]
 				not_target_Y = np.zeros(not_target_X.shape[0])
 
 				not_target_index = np.arange(not_target_X.shape[0])
