@@ -423,6 +423,8 @@ class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
 	def __init__(self, number_of_clauses, T, s, hierarchy_structure=((AND_GROUP, 1)), q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
 		self.negative_clauses = 1
 		self.tm_type = COALESCED_TM
+		self.flip_polarity = 1
+
 		super().__init__(number_of_clauses, T, s, hierarchy_structure=hierarchy_structure, q=q, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
