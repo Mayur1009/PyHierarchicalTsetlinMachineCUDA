@@ -3,14 +3,14 @@ import numpy as np
 from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
 
-values = 5
+number_of_values = 5
 noise = 0.0
 number_of_addends = 2
 examples = 10
 
-X_train_integer = np.random.randint(values, size=(examples, number_of_addends))
+X_train_integer = np.random.randint(number_of_values, size=(examples, number_of_addends))
 Y_train = X_train_integer.sum(axis=1)
-X_train = np.zeros((examples, number_of_addends*values))
+X_train = np.zeros((examples, number_of_addends*number_of_values))
 for i in range(examples):
 	for j in range(number_of_addends):
 		X_train[i, j*number_of_values + X_train_integer[i, j]] = 1
