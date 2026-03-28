@@ -17,7 +17,7 @@ Y_test = test_data[:,-1]
 tm = TsetlinMachine(clauses, 3000, s, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 4), (tm.OR_ALTERNATIVES, 10), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 500 epochs:\n")
-for i in range(500):
+for e in range(500):
 	start_training = time()
 	tm.fit(X_train, Y_train, epochs=10, incremental=True)
 	stop_training = time()
@@ -40,4 +40,4 @@ for i in range(500):
 						l.append("¬x%d" % (k - tm.number_of_literals_per_leaf // 2,))
 			print(" ^ ".join(l))
 
-	print("#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (i+1, result, stop_training-start_training, stop_testing-start_testing))
+	print("#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (e+1, result, stop_training-start_training, stop_testing-start_testing))
