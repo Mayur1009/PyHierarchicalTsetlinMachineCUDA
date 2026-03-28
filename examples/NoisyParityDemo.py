@@ -4,7 +4,7 @@ from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
 
 clauses = 32
-s = 15.1
+s = 20.1
 T = 3000
 
 train_data = np.loadtxt("./examples/NoisyParityTrainingData.txt").astype(np.uint32)
