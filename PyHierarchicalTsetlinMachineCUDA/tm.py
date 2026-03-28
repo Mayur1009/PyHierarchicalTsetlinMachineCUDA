@@ -193,7 +193,7 @@ class CommonTsetlinMachine():
 		cuda.memcpy_dtoh(ta_state_hierarchy, self.ta_state_hierarchy_gpu)
 		ta_state_hierarchy = ta_state_hierarchy.reshape((self.number_of_clauses, self.hierarchy_size[1], self.number_of_literal_chunks_per_leaf, self.number_of_state_bits))
 
-		return (ta_state[clause, leaf, ta // 32, self.number_of_state_bits-1] & (1 << (ta % 32))) > 0
+		return (ta_state_hierarchy[clause, leaf, ta // 32, self.number_of_state_bits-1] & (1 << (ta % 32))) > 0
 
 	def get_state(self):
 		# To be updated
