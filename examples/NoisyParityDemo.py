@@ -15,10 +15,10 @@ test_data = np.loadtxt("./examples/NoisyParityTestingData.txt").astype(np.uint32
 X_test = test_data[:,0:-1]
 Y_test = test_data[:,-1]
 
-tm = TsetlinMachine(clauses, T, s, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 4), (tm.OR_ALTERNATIVES, 5), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
+tm = TsetlinMachine(clauses, T, s, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 5), (tm.OR_ALTERNATIVES, 5), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 500 epochs:\n")
-for e in range(500):
+for e in range(1000):
 	start_training = time()
 	tm.fit(X_train, Y_train, epochs=10, incremental=True)
 	stop_training = time()
