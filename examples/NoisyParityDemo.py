@@ -31,9 +31,9 @@ for i in range(500):
 			print("\tComponent %d:" % (j), end= '')
 			for k in range(tm.number_of_literals_per_leaf):
 				if k < tm.number_of_literals_per_leaf // 2:
-					print(" x%d=%d)" % (j, tm.ta_action(i, j, k)), end='')
+					print(" x%d=%d" % (j, tm.ta_action(i, j, k)), end='')
 				else:
-					print(" ¬x%d=%d)" % (j, tm.ta_action(i, j, k)), end='')
+					print(" ¬x%d=%d" % (j, tm.ta_action(i, j, k)), end='')
 			print()
 
 	print("#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (i+1, result, stop_training-start_training, stop_testing-start_testing))
