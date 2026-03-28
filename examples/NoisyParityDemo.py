@@ -23,4 +23,11 @@ for i in range(500):
 	result = 100*(tm.predict(X_test) == Y_test).mean()
 	stop_testing = time()
 
+	for i in range(tm.hierarchy_size[1]):
+		print("Component %d:", end= '')
+		for j in range(tm.number_of_literals_per_leaf):
+			if (j < tm.number_of_literals_per_leaf // 2)
+				print(" x%d=%d)", j, tm.ta_action(i, j), end='')
+		print()
+
 	print("#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (i+1, result, stop_training-start_training, stop_testing-start_testing))
