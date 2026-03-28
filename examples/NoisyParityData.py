@@ -2,7 +2,7 @@ import numpy as np
 
 
 noise = 0.2
-number_of_features = 14
+number_of_features = 16
 number_of_variables = 4
 number_of_examples = 20000
 
