@@ -1,4 +1,4 @@
-# PyHierarchicalTsetlinMachineCUDA
+# Hierarchical Tsetlin Machine in CUDA
 Implements the [Hierarchical Tsetlin Machine](https://github.com/cair/HierarchicalTsetlinMachine) in CUDA.
 
 <p align="center">
