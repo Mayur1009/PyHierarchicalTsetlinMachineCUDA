@@ -4,6 +4,7 @@ from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
 
 clauses = 32
+s = 20.1
 
 train_data = np.loadtxt("./examples/NoisyParityTrainingData.txt").astype(np.uint32)
 X_train = train_data[:,0:-1]
@@ -13,7 +14,7 @@ test_data = np.loadtxt("./examples/NoisyParityTestingData.txt").astype(np.uint32
 X_test = test_data[:,0:-1]
 Y_test = test_data[:,-1]
 
-tm = TsetlinMachine(clauses, 3000, 30.1, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 4), (tm.OR_ALTERNATIVES, 10), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
+tm = TsetlinMachine(clauses, 3000, 20.1, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 4), (tm.OR_ALTERNATIVES, 10), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 500 epochs:\n")
 for i in range(500):
