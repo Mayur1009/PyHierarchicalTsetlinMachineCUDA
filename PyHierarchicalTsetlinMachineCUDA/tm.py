@@ -29,7 +29,7 @@ from pycuda.compiler import SourceModule
 
 from time import time
 
-OR_GROUP = "OR"
+OR_GROUP = "OR*"
 OR_ALTERNATIVES = "OR"
 AND_GROUP = "AND"
 
@@ -424,7 +424,7 @@ class CommonTsetlinMachine():
 						headings.append('')
 
 				for d in range(self.depth-1):
-					print(headings[self.depth - 2 - d])
+					print(headings[self.depth])
 
 				l = []
 				for k in range(self.number_of_literals_per_leaf):
