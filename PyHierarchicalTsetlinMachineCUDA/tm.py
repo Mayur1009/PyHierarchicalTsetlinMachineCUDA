@@ -412,6 +412,7 @@ class CommonTsetlinMachine():
 				size = 1
 
 				headings = []
+				print(previous_index)
 				for d in range(1, self.depth):
 					depth_d_node_index = component_remainder % self.hierarchy_structure[d][1]
 					component_remainder = component_remainder / self.hierarchy_structure[d][1]
