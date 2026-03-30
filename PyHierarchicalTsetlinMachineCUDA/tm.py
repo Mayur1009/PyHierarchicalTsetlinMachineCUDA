@@ -405,11 +405,12 @@ class CommonTsetlinMachine():
 	def print_hierarchy(self):
 		for i in range(self.number_of_clauses):
 			print("CLAUSE %d" % (i))
+
+			previous_index = np.ones((self.depth-1), dtype=np.int32)*-1
 			for j in range(self.hierarchy_size[1]):
 				component_remainder = j
 				size = 1
 
-				previous_index = np.ones((self.depth-1), dtype=np.int32)*-1
 				headings = []
 				for d in range(1, self.depth):
 					depth_d_node_index = component_remainder % self.hierarchy_structure[d][1]
