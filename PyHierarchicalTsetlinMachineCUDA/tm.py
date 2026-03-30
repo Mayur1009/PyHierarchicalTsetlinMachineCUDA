@@ -424,7 +424,7 @@ class CommonTsetlinMachine():
 						headings.append('')
 
 				for d in range(self.depth-1):
-					print(headings[self.depth])
+					print(headings[d])
 
 				l = []
 				for k in range(self.number_of_literals_per_leaf):
