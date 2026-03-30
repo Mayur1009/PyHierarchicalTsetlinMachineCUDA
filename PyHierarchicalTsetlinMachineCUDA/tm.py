@@ -29,9 +29,9 @@ from pycuda.compiler import SourceModule
 
 from time import time
 
-OR_GROUP = "OR a group of children"
-OR_ALTERNATIVES = "Create multiple OR alternatives for a sub hierarchy"
-AND_GROUP = "AND a group of children"
+OR_GROUP = "OR"
+OR_ALTERNATIVES = "OR"
+AND_GROUP = "AND"
 
 VANILLA_TM = 0
 WEIGHTED_TM = 1
@@ -412,12 +412,13 @@ class CommonTsetlinMachine():
 				size = 1
 
 				previous_index = np.ones((self.depth-1), dtype=np.int32)*-1
+				headings = []
 				for d in range(1, self.depth):
 					depth_d_node_index = component_remainder % self.hierarchy_structure[d][1]
 					component_remainder = component_remainder / self.hierarchy_structure[d][1]
 
 					if previous_index[d-1] != depth_d_node_index:
-						print("\t" * (self.depth - d) + " %d (%s)" % (depth_d_node_index, self.hierarchy_structure[d][0]))
+						headings.append("\t" * (self.depth - d) + "%s" % (self.hierarchy_structure[d][0]))
 						previous_index[d-1] = depth_d_node_index
 
 				l = []
