@@ -420,6 +420,11 @@ class CommonTsetlinMachine():
 					if previous_index[d-1] != depth_d_node_index:
 						headings.append("\t" * (self.depth - d) + "%s" % (self.hierarchy_structure[d][0]))
 						previous_index[d-1] = depth_d_node_index
+					else:
+						headings.append('')
+
+				for d in range(self.depth-1):
+					print(headings[self.depth - 2 - d])
 
 				l = []
 				for k in range(self.number_of_literals_per_leaf):
