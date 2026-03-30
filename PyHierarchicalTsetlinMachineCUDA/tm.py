@@ -406,8 +406,6 @@ class CommonTsetlinMachine():
 		for i in range(self.number_of_clauses):
 			print("CLAUSE %d" % (i))
 			for j in range(self.hierarchy_size[1]):
-				print("\tComponent #%d" % (j), end= '')
-
 				component_remainder = j
 				size = 1
 
@@ -423,7 +421,7 @@ class CommonTsetlinMachine():
 					else:
 						headings.append('')
 
-				for d in range(self.depth-1):
+				for d in range(self.depth-2, -1):
 					print(headings[d])
 
 				l = []
