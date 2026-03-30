@@ -406,7 +406,7 @@ class CommonTsetlinMachine():
 		for i in range(self.number_of_clauses):
 			print("CLAUSE %d" % (i))
 
-			start_indexing = np.ones((self.depth-1), dtype=np.int32)*-1
+			previous_index = np.ones((self.depth-1), dtype=np.int32)*-1
 			for j in range(self.hierarchy_size[1]):
 				component_remainder = j
 				size = 1
@@ -419,12 +419,15 @@ class CommonTsetlinMachine():
 					print(depth_d_node_index)
 					if start_indexing[d-1] == -1:
 						headings.append("\t" * (self.depth - d) + "(")
-					elif depth_d_node_index == 0 and start_indexing[d-1] > 0:
-						headings.append("\t" * (self.depth - d) + ") %s (" % (self.hierarchy_structure[d][0]))
+						previous_inded[d-1] = depth_d_node_index
+					elif depth_d_node_index == 0 and previous_index[d-1] != depth_d_node_index:
+						headings.append("\t" * (self.depth - d) + ")")
+						previous_inded[d-1] = depth_d_node_index
+					elif previous_index[d-1] != depth_d_node_index:
+						headings.append("\t" * (self.depth - d) + "%s" % (self.self.hierarchy_structure[d][0]))
+						previous_inded[d-1] = depth_d_node_index
 					else:
 						headings.append('')
-
-					start_indexing[d-1] = depth_d_node_index
 
 				for d in range(self.depth-2, -1, -1):
 					print(headings[d])
