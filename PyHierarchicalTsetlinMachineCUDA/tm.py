@@ -403,9 +403,9 @@ class CommonTsetlinMachine():
 		return class_sum
 
 	def print_hierarchy(self):
-		for i in range(clauses):
+		for i in range(self.number_of_clauses):
 			print("CLAUSE %d" % (i))
-			for j in range(tm.hierarchy_size[1]):
+			for j in range(self.hierarchy_size[1]):
 				print("\tComponent" % (j), end= '')
 
 				component_remainder = component;
@@ -417,12 +417,12 @@ class CommonTsetlinMachine():
 				print(": ", end='')
 
 				l = []
-				for k in range(tm.number_of_literals_per_leaf):
-					if tm.ta_action(i, j, k):
-						if k < tm.number_of_literals_per_leaf // 2:
-							l.append("x%d(%d)" % (k, tm.ta_state(i, j, k)))
+				for k in range(self..number_of_literals_per_leaf):
+					if self.ta_action(i, j, k):
+						if k < self.number_of_literals_per_leaf // 2:
+							l.append("x%d(%d)" % (k, self.ta_state(i, j, k)))
 						else:
-							l.append("¬x%d(%d)" % (k - tm.number_of_literals_per_leaf // 2, tm.ta_state(i, j, k)))
+							l.append("¬x%d(%d)" % (k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k)))
 				print(" ^ ".join(l))
 	
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
