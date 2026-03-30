@@ -417,15 +417,15 @@ class CommonTsetlinMachine():
 					component_remainder = component_remainder // self.hierarchy_structure[d][1]
 
 					print(depth_d_node_index)
-					if start_indexing[d-1] == -1:
+					if previous_index[d-1] == -1:
 						headings.append("\t" * (self.depth - d) + "(")
-						previous_inded[d-1] = depth_d_node_index
+						previous_index[d-1] = depth_d_node_index
 					elif depth_d_node_index == 0 and previous_index[d-1] != depth_d_node_index:
 						headings.append("\t" * (self.depth - d) + ")")
 						previous_inded[d-1] = depth_d_node_index
 					elif previous_index[d-1] != depth_d_node_index:
 						headings.append("\t" * (self.depth - d) + "%s" % (self.self.hierarchy_structure[d][0]))
-						previous_inded[d-1] = depth_d_node_index
+						previous_index[d-1] = depth_d_node_index
 					else:
 						headings.append('')
 
