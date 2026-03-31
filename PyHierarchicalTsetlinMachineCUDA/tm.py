@@ -29,9 +29,9 @@ from pycuda.compiler import SourceModule
 
 from time import time
 
-OR_GROUP = "OR a group of children"
-OR_ALTERNATIVES = "Create multiple OR alternatives for a sub hierarchy"
-AND_GROUP = "AND a group of children"
+OR_GROUP = " ∨* "
+OR_ALTERNATIVES = " ∨ "
+AND_GROUP = " ∧ "
 
 VANILLA_TM = 0
 WEIGHTED_TM = 1
@@ -401,6 +401,62 @@ class CommonTsetlinMachine():
 		class_sum = np.clip(class_sum.reshape((self.number_of_outputs, number_of_examples)), -self.T, self.T)
 
 		return class_sum
+
+	def print_hierarchy(self, print_ta_state=False):
+		for i in range(self.number_of_clauses):
+			print("\n CLAUSE #%d: " % (i), end='')
+
+			previous_index = np.ones((self.depth-1), dtype=np.int32)*-1
+			for j in range(self.hierarchy_size[1]):
+				component_remainder = j
+				size = 1
+
+				left = []
+				right = []
+				inside = []
+				for d in range(1, self.depth):
+					depth_d_node_index = component_remainder % self.hierarchy_structure[d][1]
+					component_remainder = component_remainder // self.hierarchy_structure[d][1]
+
+					if previous_index[d-1] == -1:
+						left.append("(")
+					elif depth_d_node_index == 0 and previous_index[d-1] != depth_d_node_index:
+						right.append(")")
+						left.insert(0, "(")
+					elif previous_index[d-1] != depth_d_node_index:
+						inside.append(self.hierarchy_structure[d][0])
+					
+					previous_index[d-1] = depth_d_node_index
+
+				for s in right:
+					print(s, end='')
+
+				for s in inside:
+					print(s, end='')
+
+				for s in left:
+					print(s, end='')
+
+				l = []
+				for k in range(self.number_of_literals_per_leaf):
+					if self.ta_action(i, j, k):
+						if k < self.number_of_literals_per_leaf // 2:
+							if print_ta_state:
+								l.append("x%d(%d)" % (k, self.ta_state(i, j, k)))
+							else:
+								l.append("x%d" % (k,))
+						else:
+							if print_ta_state:
+								l.append("¬x%d(%d)" % (k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k)))
+							else:
+								l.append("¬x%d" % (k - self.number_of_literals_per_leaf // 2,))
+				
+				if len(l) > 1:
+					print("(" + " ∧ ".join(l) + ")", end = '')
+				elif len(l) == 1:
+					print(l[0], end = '')
+
+			print(")" * (self.depth - 1))
 	
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 	def __init__(self, number_of_clauses, T, s, q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
