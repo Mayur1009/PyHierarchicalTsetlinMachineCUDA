@@ -8,7 +8,7 @@ Implements the [Hierarchical Tsetlin Machine](https://github.com/cair/Hierarchic
 ## Installation
 
 ```bash
-pip install pyhierarchicaltsetlinmachinecuda
+pip install PyHierarchicalTsetlinMachineCUDA
 ```
 or
 ```bash
