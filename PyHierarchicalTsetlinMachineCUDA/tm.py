@@ -418,7 +418,6 @@ class CommonTsetlinMachine():
 					depth_d_node_index = component_remainder % self.hierarchy_structure[d][1]
 					component_remainder = component_remainder // self.hierarchy_structure[d][1]
 
-					print(depth_d_node_index)
 					if previous_index[d-1] == -1:
 						left.append("(")
 					elif depth_d_node_index == 0 and previous_index[d-1] != depth_d_node_index:
@@ -446,7 +445,7 @@ class CommonTsetlinMachine():
 						else:
 							l.append("¬x%d(%d)" % (k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k)))
 				
-				print(" ^ ".join(l), end = '')
+				print("(" + " ∧ ".join(l) + ")", end = '')
 			print()
 	
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
