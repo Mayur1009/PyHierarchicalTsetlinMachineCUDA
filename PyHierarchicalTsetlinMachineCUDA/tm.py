@@ -29,9 +29,9 @@ from pycuda.compiler import SourceModule
 
 from time import time
 
-OR_GROUP = "OR*"
-OR_ALTERNATIVES = "OR"
-AND_GROUP = "AND"
+OR_GROUP = "∨*"
+OR_ALTERNATIVES = "∨"
+AND_GROUP = "∧"
 
 VANILLA_TM = 0
 WEIGHTED_TM = 1
@@ -411,26 +411,32 @@ class CommonTsetlinMachine():
 				component_remainder = j
 				size = 1
 
-				headings = []
+				left = []
+				right = []
+				inside = []
 				for d in range(1, self.depth):
 					depth_d_node_index = component_remainder % self.hierarchy_structure[d][1]
 					component_remainder = component_remainder // self.hierarchy_structure[d][1]
 
 					print(depth_d_node_index)
 					if previous_index[d-1] == -1:
-						headings.append("\t" * (self.depth - d) + "(")
-						previous_index[d-1] = depth_d_node_index
+						left.append("(")
 					elif depth_d_node_index == 0 and previous_index[d-1] != depth_d_node_index:
-						headings.append("\t" * (self.depth - d) + ")")
-						previous_index[d-1] = depth_d_node_index
+						right.append(")")
+						left.insert(0, "(")
 					elif previous_index[d-1] != depth_d_node_index:
-						headings.append("\t" * (self.depth - d) + "%s" % (self.hierarchy_structure[d][0]))
-						previous_index[d-1] = depth_d_node_index
-					else:
-						headings.append('')
+						inside.append(self.hierarchy_structure[d][0])
+					
+					previous_index[d-1] = depth_d_node_index
 
-				for d in range(self.depth-2, -1, -1):
-					print(headings[d])
+				for s in right:
+					print(s, end='')
+
+				for s in left:
+					print(s, end='')
+
+				for s in inside:
+					print(s, end='')
 
 				l = []
 				for k in range(self.number_of_literals_per_leaf):
@@ -440,7 +446,8 @@ class CommonTsetlinMachine():
 						else:
 							l.append("¬x%d(%d)" % (k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k)))
 				
-				print("\t" * self.depth + " ^ ".join(l))
+				print(" ^ ".join(l), end = '')
+			print()
 	
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 	def __init__(self, number_of_clauses, T, s, q=1.0, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1)):
