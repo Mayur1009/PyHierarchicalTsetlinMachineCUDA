@@ -433,7 +433,7 @@ class CommonTsetlinMachine():
 
 				for s in inside:
 					print(s, end='')
-					
+
 				for s in left:
 					print(s, end='')
 
@@ -451,7 +451,11 @@ class CommonTsetlinMachine():
 							else:
 								l.append("¬x%d" % (k - self.number_of_literals_per_leaf // 2,))
 				
-				print("(" + " ∧ ".join(l) + ")", end = '')
+				if len(l) > 1:
+					print("(" + " ∧ ".join(l) + ")", end = '')
+				elif len(l) == 1:
+					print(l[0], end = '')
+
 			print(")" * (self.depth - 1))
 	
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
