@@ -1,4 +1,29 @@
-__pycache__/
-*.egg-info/
 examples/NoisyParityTestingData.txt
 examples/NoisyParityTrainingData.txt
+
+# pixi
+.pixi/*
+!.pixi/config.toml
+pixi.lock
+.envrc
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Packaging
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints
+
+# Ruff
+.ruff_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
