@@ -581,7 +581,7 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 		return
 
 	def score(self, X):
-		X = X.reshape(X.shape[0], X.shape[1], 1)	# ASK: What is this reshape?
+		X = X.reshape(X.shape[0], X.shape[1], 1)
 		return self._score(X)
 
 	def predict(self, X):
