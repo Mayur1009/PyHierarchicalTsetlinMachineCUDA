@@ -2,7 +2,7 @@
 Implements the [Hierarchical Tsetlin Machine](https://github.com/cair/HierarchicalTsetlinMachine) in CUDA.
 
 <p align="center">
-  <img width="60%" src="https://github.com/cair/PyHierarchicalTsetlinMachineCUDA/blob/main/figures/Visualization.png">
+  <img width="60%" src="https://github.com/cair/PyHierarchicalTsetlinMachineCUDA/blob/main/figures/Visualization_voting.png">
 </p>
 
 ## Installation
