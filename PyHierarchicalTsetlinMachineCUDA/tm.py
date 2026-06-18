@@ -23,12 +23,12 @@ import numpy as np
 
 import PyHierarchicalTsetlinMachineCUDA.kernels as kernels
 
+import cupy as cp
 import pycuda.curandom as curandom
 import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
 from pycuda import gpuarray
-from pycuda.gpuarray import GPUArray 
 import sys
 
 from time import time
@@ -180,17 +180,32 @@ class CommonTsetlinMachine():
 		number_of_examples = X.shape[0]
 
 		# Allocates GPU memory for input data
-		Xm = np.ascontiguousarray(X.flatten()).astype(np.uint32)
-		X_gpu = cuda.mem_alloc(Xm.nbytes)
-		cuda.memcpy_htod(X_gpu, Xm)
+		X_gpu = cp.asarray(X, dtype=np.uint32)
 
 		# Prepares for leaf encoding of the input data
-		self.prepare_encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literal_chunks), np.int32(number_of_examples), grid=self.grid, block=self.block)
-		cuda.Context.synchronize()	
-		
+		self.prepare_encode_hierarchy(
+			X_gpu,
+			encoded_X_hierarchy_gpu,
+			np.int32(self.number_of_literal_chunks),
+			np.int32(number_of_examples),
+			grid=self.grid,
+			block=self.block
+		)
+
 		# Encodes the input data split across the leaves
-		self.encode_hierarchy(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features_hierarchy), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples), grid=self.grid, block=self.block)
-		cuda.Context.synchronize()
+		self.encode_hierarchy(
+			X_gpu,
+			encoded_X_hierarchy_gpu,
+			np.int32(self.number_of_features_hierarchy),
+			np.int32(self.number_of_literal_chunks),
+			np.int32(self.hierarchy_size[1]),
+			np.int32(self.number_of_features_per_leaf),
+			np.int32(self.number_of_literal_chunks_per_leaf),
+			np.int32(self.append_negated),
+			np.int32(number_of_examples),
+			grid=self.grid,
+			block=self.block
+		)
 
 	def allocate_gpu_memory(self):
 		# GPU memory for accumulating votes, level by level
