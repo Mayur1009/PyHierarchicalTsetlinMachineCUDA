@@ -208,29 +208,26 @@ class CommonTsetlinMachine():
 		)
 
 	def allocate_gpu_memory(self):
-		# GPU memory for accumulating votes, level by level
-		self.hierarchy_votes = []
-		for d in range(1, self.depth):
-			self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*int(self.hierarchy_size[d])*4))
-		self.hierarchy_votes.append(cuda.mem_alloc(self.number_of_clauses*4))
-		self.clause_output = np.empty(self.number_of_clauses, dtype=np.float32)
+        # Votes per level
+		self.hierarchy_votes = [cp.zeros((self.number_of_clauses, self.hierarchy_size[d]), dtype=cp.float32) for d in range(1, self.depth)] + [cp.zeros((self.number_of_clauses, 1), dtype=cp.float32)]
 
 		# GPU memory for storing hierarchy structure
-		self.hierarchy_structure_factors_gpu = cuda.mem_alloc((self.depth-1)*4)
-		cuda.memcpy_htod(self.hierarchy_structure_factors_gpu, np.array(self.hierarchy_structure_factors, dtype=np.int32))
+		self.hierarchy_structure_factors_gpu = cp.asarray(self.hierarchy_structure_factors, dtype=cp.int32)
 
 		# GPU memory for storing hierarchy structure
-		self.hierarchy_structure_type_gpu = cuda.mem_alloc((self.depth-1)*4)
-		cuda.memcpy_htod(self.hierarchy_structure_type_gpu, np.array(self.hierarchy_structure_type, dtype=np.int32))
+		self.hierarchy_structure_type_gpu = cp.asarray(self.hierarchy_structure_type, dtype=cp.int32)
 
 		# GPU memory for storing Tsetlin Automata states
-		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
-		self.clause_weights_gpu = cuda.mem_alloc(self.number_of_outputs*self.number_of_clauses*4)
-		self.component_weights_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[1]*4) # Only positive weights...
-		self.class_sum_gpu = cuda.mem_alloc(self.number_of_outputs*4)
-		self.class_sum = np.ascontiguousarray(np.empty(self.number_of_outputs)).astype(np.float32)
-		self.clause_output_max_gpu = cuda.mem_alloc(4)
-		self.clause_output_max = np.ascontiguousarray(np.empty(1)).astype(np.float32)
+		self.ta_state_hierarchy_gpu = cp.zeros((
+		    self.number_of_clauses,
+		    self.hierarchy_size[1],
+		    self.number_of_literal_chunks_per_leaf,
+		    self.number_of_state_bits
+		), dtype=cp.uint32)
+		self.clause_weights_gpu = cp.zeros((self.number_of_outputs, self.number_of_clauses), dtype=cp.int32)
+		self.component_weights_gpu = cp.zeros((self.number_of_clauses, self.hierarchy_size[1]), dtype=cp.int32) # Only positive weights...
+		self.class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
+		self.clause_output_max_gpu = cp.zeros(1, dtype=cp.float32)
 
 	def ta_action(self, clause, leaf, ta):
 		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[1]*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
