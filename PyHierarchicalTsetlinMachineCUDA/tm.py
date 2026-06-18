@@ -240,30 +240,6 @@ class CommonTsetlinMachine():
 		bit_values = 1 << np.arange(self.number_of_state_bits, dtype=np.uint32)
 		return int(np.dot(ta_bit_active, bit_values))
 
-	def get_state(self):
-		# To be updated
-		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[1]*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
-		cuda.memcpy_dtoh(self.ta_state_hierarchy, self.ta_state_hierarchy_gpu)
-		clause_weights = np.empty(self.number_of_outputs*self.number_of_clauses).astype(np.int32)
-		cuda.memcpy_dtoh(self.clause_weights, self.clause_weights_gpu)
-		return((self.ta_state_hierarchy, self.clause_weights, self.number_of_outputs, self.number_of_clauses, self.hierarchy_structure, self.boost_true_positive_feedback, self.number_of_state_bits, self.append_negated, self.min_y, self.max_y))
-
-	def set_state(self, state):
-		# To be updated
-		self.number_of_outputs = state[2]
-		self.number_of_clauses = state[3]
-		self.hierarchy_structure = state[4]
-		self.boost_true_positive_feedback = state[5]
-		self.number_of_state_bits = state[6]
-		self.append_negated = state[7]
-		self.min_y = state[8]
-		self.max_y = state[9]
-		
-		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
-		self.clause_weights_gpu = cuda.mem_alloc(self.number_of_outputs*self.number_of_clauses*4)
-		cuda.memcpy_htod(self.ta_state_hierarchy_gpu, state[0])
-		cuda.memcpy_htod(self.clause_weights_gpu, state[1])
-
 	# Transform input data for processing at next layer
 	def transform(self, X):
 		None # To be updated
