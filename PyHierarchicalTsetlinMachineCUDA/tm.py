@@ -229,24 +229,16 @@ class CommonTsetlinMachine():
 		self.class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
 		self.clause_output_max_gpu = cp.zeros(1, dtype=cp.float32)
 
-	def ta_action(self, clause, leaf, ta):
-		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[1]*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
-		cuda.memcpy_dtoh(ta_state_hierarchy, self.ta_state_hierarchy_gpu)
-		ta_state_hierarchy = ta_state_hierarchy.reshape((self.number_of_clauses, self.hierarchy_size[1], self.number_of_literal_chunks_per_leaf, self.number_of_state_bits))
+	def ta_action(self, clause: int, leaf: int, ta: int) -> bool:
+		"""Get the include/exclude action of a TA, indexed by (clause, leaf, ta)"""
+		return self.ta_state_hierarchy_gpu[clause, leaf, ta // 32, self.number_of_state_bits - 1].get() & (1 << (ta % 32)) > 0
 
-		return (ta_state_hierarchy[clause, leaf, ta // 32, self.number_of_state_bits-1] & (1 << (ta % 32))) > 0
-
-	def ta_state(self, clause, leaf, ta):
-		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[1]*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
-		cuda.memcpy_dtoh(ta_state_hierarchy, self.ta_state_hierarchy_gpu)
-		ta_state_hierarchy = ta_state_hierarchy.reshape((self.number_of_clauses, self.hierarchy_size[1], self.number_of_literal_chunks_per_leaf, self.number_of_state_bits))
-		
-		state = 0
-		for b in range(self.number_of_state_bits):
-			if (ta_state_hierarchy[clause, leaf, ta // 32, b] & (1 << (ta % 32))) > 0:
-				state |= (1 << b)
-		
-		return state
+	def ta_state(self, clause: int, leaf: int, ta: int) -> int:
+		"""Get the state of a TA, indexed by (clause, leaf, ta)"""
+		bits = self.ta_state_hierarchy_gpu[clause, leaf, ta // 32, :].get()
+		ta_bit_active = (bits >> (ta % 32)) & 1
+		bit_values = 1 << np.arange(self.number_of_state_bits, dtype=np.uint32)
+		return int(np.dot(ta_bit_active, bit_values))
 
 	def get_state(self):
 		# To be updated
