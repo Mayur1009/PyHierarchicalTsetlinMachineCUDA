@@ -979,16 +979,6 @@ code_update = """
 code_encode = """
 	extern "C"
     {
-		__global__ void prepare_encode_hierarchy(unsigned int *X, unsigned int *encoded_X, int number_of_literal_chunks, int number_of_examples)
-		{
-			int index = blockIdx.x * blockDim.x + threadIdx.x;
-			int stride = blockDim.x * gridDim.x;
-
-			for (unsigned long long i = index; i < number_of_examples * number_of_literal_chunks; i += stride) {
-				encoded_X[i] = 0;
-			}
-		}
-
 		__global__ void encode_hierarchy(unsigned int *X, unsigned int *encoded_X, int number_of_features, int number_of_literal_chunks, int number_of_leaves, int number_of_features_per_leaf, int number_of_literal_chunks_per_leaf, int append_negated, int number_of_examples)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;

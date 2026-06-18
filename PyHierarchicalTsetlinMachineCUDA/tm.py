@@ -148,7 +148,6 @@ class CommonTsetlinMachine():
 
 		# CUDA modules for encoding input data
 		mod_encode = cp.RawModule(code=kernels.code_encode)
-		self.prepare_encode_hierarchy = mod_encode.get_function("prepare_encode_hierarchy")
 		self.encode_hierarchy = mod_encode.get_function("encode_hierarchy")
 
 		mod_clauses = cp.RawModule(code=parameters + kernels.code_clauses)
@@ -166,12 +165,6 @@ class CommonTsetlinMachine():
 		# Allocates GPU memory for input data
 		X_gpu = cp.asarray(X, dtype=np.uint32)
 		encoded_X_hierarchy_gpu = cp.zeros((number_of_examples, self.number_of_literal_chunks), dtype=cp.uint32)
-
-		# Prepares for leaf encoding of the input data
-		self.prepare_encode_hierarchy(
-			*self._kernel_config(number_of_examples * self.number_of_literal_chunks),
-			(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literal_chunks), np.int32(number_of_examples))
-		)
 
 		# Encodes the input data split across the leaves
 		self.encode_hierarchy(
