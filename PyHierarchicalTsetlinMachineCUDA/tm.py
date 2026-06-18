@@ -586,15 +586,9 @@ class CommonTsetlinMachine():
 			print(")" * (self.depth - 1))
 
 	def save(self) -> dict:
-		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits, dtype=np.uint32)
-		cuda.memcpy_dtoh(ta_state_hierarchy, self.ta_state_hierarchy_gpu)
-
-		clause_weights = np.empty(self.number_of_outputs*self.number_of_clauses, dtype=np.int32)
-		cuda.memcpy_dtoh(clause_weights, self.clause_weights_gpu)
-
 		return {
-			'ta_state_hierarchy': ta_state_hierarchy,
-			'clause_weights': clause_weights,
+			'ta_state_hierarchy': self.ta_state_hierarchy_gpu.get(),
+			'clause_weights': self.clause_weights_gpu.get(),
 			'number_of_outputs': self.number_of_outputs,
 			'min_y': self.min_y,
 			'max_y': self.max_y,
@@ -621,8 +615,8 @@ class CommonTsetlinMachine():
 
 		self.allocate_gpu_memory()
 
-		cuda.memcpy_htod(self.ta_state_hierarchy_gpu, state_dict['ta_state_hierarchy'])
-		cuda.memcpy_htod(self.clause_weights_gpu, state_dict['clause_weights'])
+		self.ta_state_hierarchy_gpu = cp.asarray(state_dict['ta_state_hierarchy'], dtype=cp.uint32)
+		self.clause_weights_gpu = cp.asarray(state_dict['clause_weights'], dtype=cp.int32)
 
 		self.first = False
 
