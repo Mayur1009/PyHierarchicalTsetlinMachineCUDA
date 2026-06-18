@@ -122,68 +122,47 @@ class CommonTsetlinMachine():
 
 
 	def cuda_modules(self):
-		parameters = """
-	#define CLAUSES %d
-	#define DEPTH %d
-	#define COMPONENTS %d
-	#define LITERALS_PER_LEAF %d
-	#define TA_CHUNKS_PER_LEAF %d
-	#define LITERAL_CHUNKS %d
-	#define STATE_BITS %d
-	#define BOOST_TRUE_POSITIVE_FEEDBACK %d
-	#define S %f
-	#define THRESHOLD %d
-	#define Q %f
-	#define LOG_SCALE %d
+		parameters = f"""
+#define CLAUSES {self.number_of_clauses}
+#define DEPTH {self.depth}
+#define COMPONENTS {self.hierarchy_size[1]}
+#define LITERALS_PER_LEAF {self.number_of_literals_per_leaf}
+#define TA_CHUNKS_PER_LEAF {self.number_of_literal_chunks_per_leaf}
+#define LITERAL_CHUNKS {self.number_of_literal_chunks}
+#define STATE_BITS {self.number_of_state_bits}
+#define BOOST_TRUE_POSITIVE_FEEDBACK {self.boost_true_positive_feedback}
+#define S {float(self.s)}f
+#define THRESHOLD {self.T}
+#define Q {float(self.q)}f
+#define LOG_SCALE {int(self.log_scale)}
 
-	#define NEGATIVE_CLAUSES %d
-	#define FLIP_POLARITY %d
-		""" % (self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.log_scale, self.negative_clauses, self.flip_polarity)
+#define NEGATIVE_CLAUSES {self.negative_clauses}
+#define FLIP_POLARITY {self.flip_polarity}
+		"""
 		
-		mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
+		mod_prepare = cp.RawModule(code=parameters + kernels.code_header + kernels.code_prepare)
 		self.prepare_weights = mod_prepare.get_function("prepare_weights")
 		self.prepare_hierarchy = mod_prepare.get_function("prepare_hierarchy")
 
-		mod_update = SourceModule(parameters + kernels.code_header + kernels.code_update, no_extern_c=True)		
+		mod_update = cp.RawModule(code=parameters + kernels.code_header + kernels.code_update)
 		self.update_hierarchy = mod_update.get_function("update_hierarchy")
-		self.update_hierarchy.prepare("PiPPPiPPPPPi")
-
 		self.update_weights = mod_update.get_function("update_weights")
-		self.update_weights.prepare("PiiPPPPi")
-
 		self.evaluate_leaves = mod_update.get_function("evaluate_leaves")
-		self.evaluate_leaves.prepare("PPPiPPPi")
-
 		self.max_clause_output = mod_update.get_function("max_clause_output")
-		self.max_clause_output.prepare("iPP")
-
 		self.evaluate_final = mod_update.get_function("evaluate_final")
-		self.evaluate_final.prepare("iPPP")
-
 		self.rescale_final = mod_update.get_function("rescale_final")
-		self.rescale_final.prepare("iPP")
-
 		self.evaluate_and_groups = mod_update.get_function("evaluate_and_groups")
-		self.evaluate_and_groups.prepare("PPii")
-
 		self.propagate_and_group_false_truth_values = mod_update.get_function("propagate_and_group_false_truth_values")
-		self.propagate_and_group_false_truth_values.prepare("PPii")
-
 		self.propagate_or_group_false_truth_values = mod_update.get_function("propagate_or_group_false_truth_values")
-		self.propagate_or_group_false_truth_values.prepare("PPPii")
-
 		self.evaluate_or_groups = mod_update.get_function("evaluate_or_groups")
-		self.evaluate_or_groups.prepare("PPii")
-
 		self.evaluate_or_alternatives = mod_update.get_function("evaluate_or_alternatives")
-		self.evaluate_or_alternatives.prepare("PPii")
 
 		# CUDA modules for encoding input data
-		mod_encode = SourceModule(kernels.code_encode, no_extern_c=True)
+		mod_encode = cp.RawModule(code=kernels.code_encode)
 		self.prepare_encode_hierarchy = mod_encode.get_function("prepare_encode_hierarchy")
 		self.encode_hierarchy = mod_encode.get_function("encode_hierarchy")
 
-		mod_clauses = SourceModule(parameters + kernels.code_clauses, no_extern_c=True)
+		mod_clauses = cp.RawModule(code=parameters + kernels.code_clauses)
 		self.kernel_get_ta_states = mod_clauses.get_function("get_ta_states")
 
 	def encode_X(self, X):
@@ -195,27 +174,14 @@ class CommonTsetlinMachine():
 
 		# Prepares for leaf encoding of the input data
 		self.prepare_encode_hierarchy(
-			X_gpu,
-			encoded_X_hierarchy_gpu,
-			np.int32(self.number_of_literal_chunks),
-			np.int32(number_of_examples),
-			grid=self.grid,
-			block=self.block
+			self.grid, self.block,
+			(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literal_chunks), np.int32(number_of_examples))
 		)
 
 		# Encodes the input data split across the leaves
 		self.encode_hierarchy(
-			X_gpu,
-			encoded_X_hierarchy_gpu,
-			np.int32(self.number_of_features_hierarchy),
-			np.int32(self.number_of_literal_chunks),
-			np.int32(self.hierarchy_size[1]),
-			np.int32(self.number_of_features_per_leaf),
-			np.int32(self.number_of_literal_chunks_per_leaf),
-			np.int32(self.append_negated),
-			np.int32(number_of_examples),
-			grid=self.grid,
-			block=self.block
+			self.grid, self.block,
+			(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features_hierarchy), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples))
 		)
 
 		return encoded_X_hierarchy_gpu
@@ -257,57 +223,62 @@ class CommonTsetlinMachine():
 
 	def initialize_weights_and_ta_states(self):
 		class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
-		self.prepare_weights(self.cuda_rng.state, np.int32(self.tm_type), np.int32(self.number_of_outputs), self.clause_weights_gpu, class_sum_gpu, grid=self.grid, block=self.block)
+		rng_state = np.intp(int(self.cuda_rng.state))
+		self.prepare_weights(self.grid, self.block, (
+			rng_state,
+			np.int32(self.tm_type),
+			np.int32(self.number_of_outputs),
+			self.clause_weights_gpu,
+			class_sum_gpu
+		))
 
-		self.prepare_hierarchy(self.cuda_rng.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, class_sum_gpu, grid=self.grid, block=self.block)
+		self.prepare_hierarchy(self.grid, self.block, (
+			rng_state,
+			np.int32(self.number_of_outputs),
+			self.ta_state_hierarchy_gpu,
+			self.clause_weights_gpu,
+			class_sum_gpu
+		))
 
 	def evaluate_hierarchy(self, encoded_X_hierarchy, e):
 		# Initializes class sums to zero
 		class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
 
 		# Evaluates all the hierarchy leaves in parallel
-		self.evaluate_leaves.prepared_call(
-			self.grid,
-			self.block,
+		self.evaluate_leaves(self.grid, self.block, (
 			self.ta_state_hierarchy_gpu,
 			self.component_weights_gpu,
 			self.hierarchy_votes[0],
-			self.depth,
+			np.int32(self.depth),
 			self.hierarchy_structure_factors_gpu,
 			self.hierarchy_structure_type_gpu,
 			encoded_X_hierarchy,
 			np.int32(e)
-		)
+		))
 
 		# Propagates votes bottom-up in the hierarchy, starting from the clause components (leaves)
 		for d in range(1, self.depth):
 			if (self.hierarchy_structure[d][0] == AND_GROUP):
-				self.evaluate_and_groups.prepared_call(
-					self.grid,
-					self.block,
+				self.evaluate_and_groups(self.grid, self.block, (
 					self.hierarchy_votes[d-1],
 					self.hierarchy_votes[d],
-					self.hierarchy_size[d + 1],
-					self.hierarchy_structure[d][1]
-				)
+					np.int32(self.hierarchy_size[d + 1]),
+					np.int32(self.hierarchy_structure[d][1])
+				))
 			elif self.hierarchy_structure[d][0] == OR_GROUP:
-				self.evaluate_or_groups.prepared_call(
-					self.grid,
-					self.block,
+				self.evaluate_or_groups(self.grid, self.block, (
 					self.hierarchy_votes[d-1],
 					self.hierarchy_votes[d],
-					self.hierarchy_size[d + 1],
-					self.hierarchy_structure[d][1]
-				)
+					np.int32(self.hierarchy_size[d + 1]),
+					np.int32(self.hierarchy_structure[d][1])
+				))
 			elif self.hierarchy_structure[d][0] == OR_ALTERNATIVES:
-				self.evaluate_or_alternatives.prepared_call(
-					self.grid,
-					self.block,
+				self.evaluate_or_alternatives(self.grid, self.block, (
 					self.hierarchy_votes[d-1],
 					self.hierarchy_votes[d],
-					self.hierarchy_size[d + 1],
-					self.hierarchy_structure[d][1]
-				)
+					np.int32(self.hierarchy_size[d + 1]),
+					np.int32(self.hierarchy_structure[d][1])
+				))
 			else:
 				raise ValueError("Unknown Node Type!")
 
@@ -325,14 +296,12 @@ class CommonTsetlinMachine():
 		# 	cuda.Context.synchronize()
 
 		# Adds up the votes from each clause (hierarchy root)
-		self.evaluate_final.prepared_call(
-			self.grid,
-			self.block,
+		self.evaluate_final(self.grid, self.block, (
 			np.int32(self.number_of_outputs),
 			self.hierarchy_votes[self.depth-1],
 			self.clause_weights_gpu,
 			class_sum_gpu
-		)
+		))
 
 		return class_sum_gpu
 
@@ -371,53 +340,47 @@ class CommonTsetlinMachine():
 			for e in range(number_of_examples):
 				class_sum_gpu = self.evaluate_hierarchy(encoded_X_hierarchy_training_gpu, e)
 
+				rng_state = np.intp(int(self.cuda_rng.state))
+
 				# Propagates the root value and any intermittent node values back to the leaves.
 				# The purpose is to determine which leaves only has True nodes on the path from leaf to root.
 				for d in range(self.depth-1, 0, -1):
 					if self.hierarchy_structure[d][0] != OR_GROUP:
-						self.propagate_and_group_false_truth_values.prepared_call(
-							self.grid,
-							self.block,
+						self.propagate_and_group_false_truth_values(self.grid, self.block, (
 							self.hierarchy_votes[d-1],
 							self.hierarchy_votes[d],
-							self.hierarchy_size[d + 1],
-							self.hierarchy_structure[d][1]
-						)
+							np.int32(self.hierarchy_size[d + 1]),
+							np.int32(self.hierarchy_structure[d][1])
+						))
 					else:
-						self.propagate_or_group_false_truth_values.prepared_call(
-							self.grid,
-							self.block,
-							self.cuda_rng.state,
+						self.propagate_or_group_false_truth_values(self.grid, self.block, (
+							rng_state,
 							self.hierarchy_votes[d-1],
 							self.hierarchy_votes[d],
-							self.hierarchy_size[d + 1],
-							self.hierarchy_structure[d][1]
-						)
+							np.int32(self.hierarchy_size[d + 1]),
+							np.int32(self.hierarchy_structure[d][1])
+						))
 
 				# Updates the clause components (leaves) based on the propagated truth values
-				self.update_hierarchy.prepared_call(
-					self.grid,
-					self.block,
-					self.cuda_rng.state,
+				self.update_hierarchy(self.grid, self.block, (
+					rng_state,
 					np.int32(self.number_of_outputs),
 					self.ta_state_hierarchy_gpu,
 					self.clause_weights_gpu,
 					self.hierarchy_votes[0],
-					self.depth,
+					np.int32(self.depth),
 					self.hierarchy_structure_factors_gpu,
 					self.hierarchy_structure_type_gpu,
 					class_sum_gpu,
 					encoded_X_hierarchy_training_gpu,
 					Y_gpu,
 					np.int32(e)
-				)
+				))
 
 				# Updates the clause weights
 				if (self.tm_type in [WEIGHTED_TM, COALESCED_TM]):
-					self.update_weights.prepared_call(
-						self.grid,
-						self.block,
-						self.cuda_rng.state,
+					self.update_weights(self.grid, self.block, (
+						rng_state,
 						np.int32(self.tm_type),
 						np.int32(self.number_of_outputs),
 						self.clause_weights_gpu,
@@ -425,7 +388,7 @@ class CommonTsetlinMachine():
 						class_sum_gpu,
 						Y_gpu,
 						np.int32(e)
-					)
+					))
 		return
        
 	def _score(self, X, clip=True):
@@ -451,7 +414,7 @@ class CommonTsetlinMachine():
 		# Calculate grid size based on the kernel
 		total = self.number_of_clauses * self.hierarchy_size[1] * self.number_of_literals_per_leaf
 		grid = (((total + self.block[0] - 1) // self.block[0]), 1, 1)
-		self.kernel_get_ta_states(self.ta_state_hierarchy_gpu, ta_states_gpu, block=self.block, grid=grid)
+		self.kernel_get_ta_states(grid, self.block, (self.ta_state_hierarchy_gpu, ta_states_gpu))
 
 		# Copy back to CPU
 		return ta_states_gpu.get()
@@ -622,9 +585,9 @@ class CommonTsetlinMachine():
 
 	
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, q=1.0, log_scale=False, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(self, number_of_clauses, T, s, hierarchy_structure=((AND_GROUP, 1)), q=1.0, log_scale=False, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
 		self.negative_clauses = 1
-		super().__init__(number_of_clauses, T, s, q=q, log_scale=log_scale, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(number_of_clauses, T, s, hierarchy_structure, q=q, log_scale=log_scale, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
