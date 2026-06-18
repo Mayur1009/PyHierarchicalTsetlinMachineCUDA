@@ -103,6 +103,7 @@ class CommonTsetlinMachine():
 				self.number_of_literal_chunks *= self.hierarchy_structure[d][1]
 
 		self.seed = randint(1, 2**30) if seed is None else (seed if seed > 0 else seed + 1)
+		self.np_rng = np.random.default_rng(self.seed)
 
 		self.cuda_modules()
 
@@ -131,10 +132,6 @@ class CommonTsetlinMachine():
 #define WEIGHTED_TM {WEIGHTED_TM}
 #define COALESCED_TM {COALESCED_TM}
 		"""
-		
-		mod_prepare = cp.RawModule(code=parameters + kernels.code_header + kernels.code_prepare)
-		self.prepare_weights = mod_prepare.get_function("prepare_weights")
-		self.prepare_hierarchy = mod_prepare.get_function("prepare_hierarchy")
 
 		mod_update = cp.RawModule(code=parameters + kernels.code_header + kernels.code_update)
 		self.update_hierarchy = mod_update.get_function("update_hierarchy")
@@ -220,22 +217,22 @@ class CommonTsetlinMachine():
 		None # To be updated
 
 	def initialize_weights_and_ta_states(self):
-		class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
-		self.prepare_weights(*self.ker_conf_clauses, (
-			np.uint64(self.seed),
-			np.int32(self.tm_type),
-			np.int32(self.number_of_outputs),
-			self.clause_weights_gpu,
-			class_sum_gpu
-		))
+		# Init all the bits except last one to 1.
+		self.ta_state_hierarchy_gpu[:, :, :, :-1] = cp.uint32(0xFFFFFFFF)
+		self.ta_state_hierarchy_gpu[:, :, :, -1] = 0
 
-		self.prepare_hierarchy(*self.ker_conf_clauses, (
-			np.uint64(self.seed),
-			np.int32(self.number_of_outputs),
-			self.ta_state_hierarchy_gpu,
-			self.clause_weights_gpu,
-			class_sum_gpu
-		))
+		# Init weights
+		if self.negative_clauses:
+			if self.tm_type == COALESCED_TM:
+				signs = self.np_rng.integers(
+					0, 2, size=(self.number_of_outputs, self.number_of_clauses), dtype=np.int32
+				)
+				self.clause_weights_gpu = cp.asarray(1 - 2 * signs, dtype=cp.int32)
+			else:
+				row = 1 - 2 * (np.arange(self.number_of_clauses, dtype=np.int32) % 2)
+				self.clause_weights_gpu = cp.asarray(np.tile(row, (self.number_of_outputs, 1)), dtype=cp.int32)
+		else:
+			self.clause_weights_gpu = cp.ones((self.number_of_outputs, self.number_of_clauses), dtype=cp.int32)
 
 	def evaluate_hierarchy(self, encoded_X_hierarchy, e):
 		# Initializes class sums to zero
