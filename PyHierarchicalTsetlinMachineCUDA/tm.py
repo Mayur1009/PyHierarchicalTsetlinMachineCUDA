@@ -45,6 +45,7 @@ COALESCED_TM = 2
 class CommonTsetlinMachine():
 
 	def __init__(self, number_of_clauses, T, s, hierarchy_structure, q=1.0, log_scale=False, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+		# Params
 		self.number_of_clauses = number_of_clauses
 		self.number_of_state_bits = number_of_state_bits
 		self.T = int(T)
@@ -58,6 +59,14 @@ class CommonTsetlinMachine():
 		self.append_negated = append_negated
 		self.grid = grid
 		self.block = block
+
+        # Make sure child classes set these
+		if not hasattr(self, 'negative_clauses'):
+			self.negative_clauses = 1
+		if not hasattr(self, 'flip_polarity'):
+			self.flip_polarity = 0
+		if not hasattr(self, 'tm_type'):
+			self.tm_type = VANILLA_TM
 
 		# Calculates the number of nodes at each level of the hierarchy
 		self.hierarchy_size = [0] * (self.depth + 1)
