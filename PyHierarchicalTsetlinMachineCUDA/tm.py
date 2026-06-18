@@ -325,6 +325,7 @@ class CommonTsetlinMachine():
 		encoded_X_hierarchy_training_gpu = self.encode_X(X)
 
 		for epoch in range(epochs):
+			rng_state = np.uint64(int(self.seed) + epoch)
 			for e in range(number_of_examples):
 				class_sum_gpu = self.evaluate_hierarchy(encoded_X_hierarchy_training_gpu, e)
 
@@ -342,7 +343,7 @@ class CommonTsetlinMachine():
 						))
 					else:
 						self.propagate_or_group_false_truth_values(*kc, (
-							np.uint64(self.seed),
+							rng_state,
 							self.hierarchy_votes[d-1],
 							self.hierarchy_votes[d],
 							np.int32(self.hierarchy_size[d + 1]),
@@ -352,7 +353,7 @@ class CommonTsetlinMachine():
 
 				# Updates the clause components (leaves) based on the propagated truth values
 				self.update_hierarchy(*self.ker_conf_clauses, (
-					np.uint64(self.seed),
+					rng_state,
 					np.int32(self.number_of_outputs),
 					self.ta_state_hierarchy_gpu,
 					self.clause_weights_gpu,
@@ -369,7 +370,7 @@ class CommonTsetlinMachine():
 				# Updates the clause weights
 				if (self.tm_type in [WEIGHTED_TM, COALESCED_TM]):
 					self.update_weights(*self.ker_conf_clauses, (
-						np.uint64(self.seed),
+						rng_state,
 						np.int32(self.tm_type),
 						np.int32(self.number_of_outputs),
 						self.clause_weights_gpu,
