@@ -16,8 +16,9 @@ setup(
 		'pycuda',
 		'scipy',
 		'scikit-learn',
-      'scikit-image',
+		'scikit-image',
 		'networkx',
+		'cupy-cuda12x[ctk]',
 	],
 	extras_require={
 		'examples': ['tensorflow', 'matplotlib', 'pygraphviz'],
