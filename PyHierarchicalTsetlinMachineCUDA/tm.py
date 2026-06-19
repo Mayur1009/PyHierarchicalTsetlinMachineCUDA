@@ -333,7 +333,7 @@ class CommonTsetlinMachine:
 		)
 		return class_sum_gpu
 
-	def _fit(self, X, encoded_Y, epochs=100, incremental=False):
+	def _fit(self, X, encoded_Y, epochs=100, incremental=False, shuffle=False):
 		if self.number_of_features_hierarchy != X.shape[1]:
 			raise ValueError("The number of features spanned by hierarchy does not align with the input data.")
 
@@ -352,8 +352,12 @@ class CommonTsetlinMachine:
 		Y_gpu = cp.asarray(encoded_Y, dtype=cp.uint32)
 		encoded_X_hierarchy_training_gpu = self.encode_X(X)
 
+		iota = np.arange(number_of_examples)
 		for epoch in range(epochs):
-			for e in range(number_of_examples):
+			if shuffle:
+				self.np_rng.shuffle(iota)
+
+			for e in iota:
 				class_sum_gpu = self.evaluate_hierarchy(encoded_X_hierarchy_training_gpu, e)
 
 				# Propagates the root value and any intermittent node values back to the leaves.
@@ -651,7 +655,7 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 			seed=seed,
 		)
 
-	def fit(self, X, Y, epochs=100, incremental=False):
+	def fit(self, X, Y, epochs=100, incremental=False, shuffle=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
 
 		self.number_of_outputs = Y.shape[1]
@@ -661,7 +665,7 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 		self.min_y = None
 
 		encoded_Y = np.where(Y == 1, self.T, -self.T).astype(np.int32)
-		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental, shuffle=shuffle)
 
 		return
 
@@ -708,7 +712,7 @@ class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
 			seed=seed,
 		)
 
-	def fit(self, X, Y, epochs=100, incremental=False):
+	def fit(self, X, Y, epochs=100, incremental=False, shuffle=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
 
 		self.number_of_outputs = int(np.max(Y) + 1)
@@ -721,7 +725,7 @@ class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
 		for i in range(self.number_of_outputs):
 			encoded_Y[:, i] = np.where(Y == i, self.T, -self.T)
 
-		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental, shuffle=shuffle)
 
 		return
 
@@ -902,13 +906,13 @@ class TsetlinMachine(CommonTsetlinMachine):
 			seed=seed,
 		)
 
-	def fit(self, X, Y, epochs=100, incremental=False):
+	def fit(self, X, Y, epochs=100, incremental=False, shuffle=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
 		self.number_of_outputs = 1
 		self.max_y = None
 		self.min_y = None
 		encoded_Y = np.where(Y == 1, self.T, -self.T).astype(np.int32)
-		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental, shuffle=shuffle)
 		return
 
 	def score(self, X):
@@ -950,7 +954,7 @@ class RegressionTsetlinMachine(CommonTsetlinMachine):
 			seed=seed,
 		)
 
-	def fit(self, X, Y, epochs=100, incremental=False):
+	def fit(self, X, Y, epochs=100, incremental=False, shuffle=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
 		self.number_of_outputs = 1
 		self.patch_dim = (X.shape[1], 1, 1)
@@ -958,7 +962,7 @@ class RegressionTsetlinMachine(CommonTsetlinMachine):
 		self.min_y = np.min(Y)
 
 		encoded_Y = ((Y - self.min_y) / (self.max_y - self.min_y) * self.T).astype(np.int32)
-		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental, shuffle=shuffle)
 		return
 
 	def predict(self, X):
