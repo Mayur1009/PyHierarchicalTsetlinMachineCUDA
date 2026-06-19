@@ -500,7 +500,7 @@ code_update = """
 			}
 		}
 
-		__global__ void propagate_or_group_false_truth_values(float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children, int example)
+		__global__ void propagate_or_group_false_truth_values(float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -573,7 +573,7 @@ code_update = """
 			state[index] = localState;
 		}
 
-		__global__ void propagate_or_group_false_truth_values_old(float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children, int example)
+		__global__ void propagate_or_group_false_truth_values_old(float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -952,6 +952,7 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
+			/* Copy state to local memory for efficiency */
 			curandState localState = state[index];
 
 			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {

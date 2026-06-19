@@ -382,7 +382,6 @@ class CommonTsetlinMachine:
 								self.hierarchy_votes[d],
 								np.int32(self.hierarchy_size[d + 1]),
 								np.int32(self.hierarchy_structure[d][1]),
-								np.int32(e),
 							),
 						)
 
