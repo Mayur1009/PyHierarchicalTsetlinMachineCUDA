@@ -20,6 +20,7 @@
 
 from collections import deque
 from random import randint
+
 import cupy as cp
 import numpy as np
 
@@ -34,9 +35,22 @@ WEIGHTED_TM = 1
 COALESCED_TM = 2
 
 
-class CommonTsetlinMachine():
-
-	def __init__(self, number_of_clauses, T, s, hierarchy_structure, q=1.0, log_scale=False, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+class CommonTsetlinMachine:
+	def __init__(
+		self,
+		number_of_clauses: int,
+		T: int,
+		s: float,
+		hierarchy_structure: tuple[tuple[str, int], ...],
+		q: float = 1.0,
+		log_scale: bool = False,
+		boost_true_positive_feedback: int = 1,
+		number_of_state_bits: int = 8,
+		append_negated: bool = True,
+		grid: tuple[int, int, int] = (16 * 13, 1, 1),
+		block: tuple[int, int, int] = (128, 1, 1),
+		seed: int | None = None,
+	):
 		# Params
 		self.number_of_clauses = number_of_clauses
 		self.number_of_state_bits = number_of_state_bits
@@ -52,34 +66,36 @@ class CommonTsetlinMachine():
 		self.grid = grid
 		self.block = block
 
-        # Make sure child classes set these
-		if not hasattr(self, 'negative_clauses'):
+		# Make sure child classes set these
+		if not hasattr(self, "negative_clauses"):
 			self.negative_clauses = 1
-		if not hasattr(self, 'flip_polarity'):
+		if not hasattr(self, "flip_polarity"):
 			self.flip_polarity = 0
-		if not hasattr(self, 'tm_type'):
+		if not hasattr(self, "tm_type"):
 			self.tm_type = VANILLA_TM
 
 		# Calculates the number of nodes at each level of the hierarchy
 		self.hierarchy_size = [0] * (self.depth + 1)
 		self.hierarchy_size[self.depth] = 1
 		for d in range(self.depth - 1):
-			self.hierarchy_size[self.depth - d - 1] = self.hierarchy_structure[self.depth - d - 1][1] * self.hierarchy_size[self.depth - d]
+			self.hierarchy_size[self.depth - d - 1] = (
+				self.hierarchy_structure[self.depth - d - 1][1] * self.hierarchy_size[self.depth - d]
+			)
 
 		# Represents hierarchy structure for transfer to GPU
 		self.hierarchy_structure_factors = [0] * (self.depth - 1)
 		self.hierarchy_structure_type = [0] * (self.depth - 1)
 		for d in range(1, self.depth):
-			self.hierarchy_structure_factors[d-1] = self.hierarchy_structure[d][1]
+			self.hierarchy_structure_factors[d - 1] = self.hierarchy_structure[d][1]
 			if self.hierarchy_structure[d][0] == OR_ALTERNATIVES:
-				self.hierarchy_structure_type[d-1] = 1
+				self.hierarchy_structure_type[d - 1] = 1
 			elif self.hierarchy_structure[d][0] == OR_GROUP:
-				self.hierarchy_structure_type[d-1] = 2
+				self.hierarchy_structure_type[d - 1] = 2
 
 		# Calculates total number of features spanned by the hierarchy
 		self.number_of_features_hierarchy = 1
 		for d in range(self.depth - 1, -1, -1):
-			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
+			if self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP:
 				self.number_of_features_hierarchy *= self.hierarchy_structure[d][1]
 
 		# Calculates literal chunks per leaf
@@ -99,7 +115,7 @@ class CommonTsetlinMachine():
 		# Calculates number of literal chunks overall for the feature vector (ignores OR alternatives)
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf
 		for d in range(self.depth - 1, 0, -1):
-			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
+			if self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP:
 				self.number_of_literal_chunks *= self.hierarchy_structure[d][1]
 
 		self.seed = randint(1, 2**30) if seed is None else (seed if seed > 0 else seed + 1)
@@ -108,7 +124,6 @@ class CommonTsetlinMachine():
 		self.cuda_modules()
 
 		self.first = True
-
 
 	def cuda_modules(self):
 		parameters = f"""
@@ -169,14 +184,26 @@ class CommonTsetlinMachine():
 		# Encodes the input data split across the leaves
 		self.encode_hierarchy(
 			*self._kernel_config(number_of_examples),
-			(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features_hierarchy), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples))
+			(
+				X_gpu,
+				encoded_X_hierarchy_gpu,
+				np.int32(self.number_of_features_hierarchy),
+				np.int32(self.number_of_literal_chunks),
+				np.int32(self.hierarchy_size[1]),
+				np.int32(self.number_of_features_per_leaf),
+				np.int32(self.number_of_literal_chunks_per_leaf),
+				np.int32(self.append_negated),
+				np.int32(number_of_examples),
+			),
 		)
 
 		return encoded_X_hierarchy_gpu
 
 	def allocate_gpu_memory(self):
-        # Votes per level
-		self.hierarchy_votes = [cp.zeros((self.number_of_clauses, self.hierarchy_size[d]), dtype=cp.float32) for d in range(1, self.depth)] + [cp.zeros((self.number_of_clauses, 1), dtype=cp.float32)]
+		# Votes per level
+		self.hierarchy_votes = [
+			cp.zeros((self.number_of_clauses, self.hierarchy_size[d]), dtype=cp.float32) for d in range(1, self.depth)
+		] + [cp.zeros((self.number_of_clauses, 1), dtype=cp.float32)]
 
 		# GPU memory for storing hierarchy structure
 		self.hierarchy_structure_factors_gpu = cp.asarray(self.hierarchy_structure_factors, dtype=cp.int32)
@@ -185,18 +212,26 @@ class CommonTsetlinMachine():
 		self.hierarchy_structure_type_gpu = cp.asarray(self.hierarchy_structure_type, dtype=cp.int32)
 
 		# GPU memory for storing Tsetlin Automata states
-		self.ta_state_hierarchy_gpu = cp.zeros((
-		    self.number_of_clauses,
-		    self.hierarchy_size[1],
-		    self.number_of_literal_chunks_per_leaf,
-		    self.number_of_state_bits
-		), dtype=cp.uint32)
+		self.ta_state_hierarchy_gpu = cp.zeros(
+			(
+				self.number_of_clauses,
+				self.hierarchy_size[1],
+				self.number_of_literal_chunks_per_leaf,
+				self.number_of_state_bits,
+			),
+			dtype=cp.uint32,
+		)
 		self.clause_weights_gpu = cp.zeros((self.number_of_outputs, self.number_of_clauses), dtype=cp.int32)
-		self.component_weights_gpu = cp.zeros((self.number_of_clauses, self.hierarchy_size[1]), dtype=cp.int32) # Only positive weights...
+		self.component_weights_gpu = cp.zeros(
+			(self.number_of_clauses, self.hierarchy_size[1]), dtype=cp.int32
+		)  # Only positive weights...
 
 	def ta_action(self, clause: int, leaf: int, ta: int) -> bool:
 		"""Get the include/exclude action of a TA, indexed by (clause, leaf, ta)"""
-		return self.ta_state_hierarchy_gpu[clause, leaf, ta // 32, self.number_of_state_bits - 1].get() & (1 << (ta % 32)) > 0
+		return (
+			self.ta_state_hierarchy_gpu[clause, leaf, ta // 32, self.number_of_state_bits - 1].get() & (1 << (ta % 32))
+			> 0
+		)
 
 	def ta_state(self, clause: int, leaf: int, ta: int) -> int:
 		"""Get the state of a TA, indexed by (clause, leaf, ta)"""
@@ -207,7 +242,7 @@ class CommonTsetlinMachine():
 
 	# Transform input data for processing at next layer
 	def transform(self, X):
-		None # To be updated
+		None  # To be updated
 
 	def initialize_weights_and_ta_states(self):
 		# Init all the bits except last one to 1.
@@ -232,76 +267,67 @@ class CommonTsetlinMachine():
 		class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
 
 		# Evaluates all the hierarchy leaves in parallel
-		self.evaluate_leaves(*self.ker_conf_clause_components, (
-			self.ta_state_hierarchy_gpu,
-			self.component_weights_gpu,
-			self.hierarchy_votes[0],
-			np.int32(self.depth),
-			self.hierarchy_structure_factors_gpu,
-			self.hierarchy_structure_type_gpu,
-			encoded_X_hierarchy,
-			np.int32(e)
-		))
+		self.evaluate_leaves(
+			*self.ker_conf_clause_components,
+			(
+				self.ta_state_hierarchy_gpu,
+				self.component_weights_gpu,
+				self.hierarchy_votes[0],
+				np.int32(self.depth),
+				self.hierarchy_structure_factors_gpu,
+				self.hierarchy_structure_type_gpu,
+				encoded_X_hierarchy,
+				np.int32(e),
+			),
+		)
 
 		# Propagates votes bottom-up in the hierarchy, starting from the clause components (leaves)
 		for d in range(1, self.depth):
 			kc = self._kernel_config(self.number_of_clauses * self.hierarchy_size[d + 1])
-			if (self.hierarchy_structure[d][0] == AND_GROUP):
-				self.evaluate_and_groups(*kc, (
-					self.hierarchy_votes[d-1],
-					self.hierarchy_votes[d],
-					np.int32(self.hierarchy_size[d + 1]),
-					np.int32(self.hierarchy_structure[d][1])
-				))
+			if self.hierarchy_structure[d][0] == AND_GROUP:
+				self.evaluate_and_groups(
+					*kc,
+					(
+						self.hierarchy_votes[d - 1],
+						self.hierarchy_votes[d],
+						np.int32(self.hierarchy_size[d + 1]),
+						np.int32(self.hierarchy_structure[d][1]),
+					),
+				)
 			elif self.hierarchy_structure[d][0] == OR_GROUP:
-				self.evaluate_or_groups(*kc, (
-					self.hierarchy_votes[d-1],
-					self.hierarchy_votes[d],
-					np.int32(self.hierarchy_size[d + 1]),
-					np.int32(self.hierarchy_structure[d][1])
-				))
+				self.evaluate_or_groups(
+					*kc,
+					(
+						self.hierarchy_votes[d - 1],
+						self.hierarchy_votes[d],
+						np.int32(self.hierarchy_size[d + 1]),
+						np.int32(self.hierarchy_structure[d][1]),
+					),
+				)
 			elif self.hierarchy_structure[d][0] == OR_ALTERNATIVES:
-				self.evaluate_or_alternatives(*kc, (
-					self.hierarchy_votes[d-1],
-					self.hierarchy_votes[d],
-					np.int32(self.hierarchy_size[d + 1]),
-					np.int32(self.hierarchy_structure[d][1])
-				))
+				self.evaluate_or_alternatives(
+					*kc,
+					(
+						self.hierarchy_votes[d - 1],
+						self.hierarchy_votes[d],
+						np.int32(self.hierarchy_size[d + 1]),
+						np.int32(self.hierarchy_structure[d][1]),
+					),
+				)
 			else:
 				raise ValueError("Unknown Node Type!")
 
-		# self.clause_output_max[:] = np.finfo(np.float32).min
-		# cuda.memcpy_htod(self.clause_output_max_gpu, self.clause_output_max)
-
-		# if self.log_scale:
-		# 	self.max_clause_output.prepared_call(
-		# 		self.grid,
-		# 		self.block,
-		# 		np.int32(self.number_of_outputs),
-		# 		self.hierarchy_votes[self.depth-1],
-		# 		self.clause_output_max_gpu
-		# 	)
-		# 	cuda.Context.synchronize()
-
 		# Adds up the votes from each clause (hierarchy root)
-		self.evaluate_final(*self.ker_conf_clauses, (
-			np.int32(self.number_of_outputs),
-			self.hierarchy_votes[self.depth-1],
-			self.clause_weights_gpu,
-			class_sum_gpu
-		))
-
+		self.evaluate_final(
+			*self.ker_conf_clauses,
+			(
+				np.int32(self.number_of_outputs),
+				self.hierarchy_votes[self.depth - 1],
+				self.clause_weights_gpu,
+				class_sum_gpu,
+			),
+		)
 		return class_sum_gpu
-
-		# if self.log_scale:
-		# 	self.rescale_final.prepared_call(
-		# 		self.grid,
-		# 		self.block,
-		# 		np.int32(self.number_of_outputs),
-		# 		self.clause_output_max_gpu,
-		# 		self.class_sum_gpu
-		# 	)
-		# 	cuda.Context.synchronize()
 
 	def _fit(self, X, encoded_Y, epochs=100, incremental=False):
 		if self.number_of_features_hierarchy != X.shape[1]:
@@ -310,11 +336,9 @@ class CommonTsetlinMachine():
 		number_of_examples = X.shape[0]
 
 		if self.first:
-			# Allocates memory and prepares weights and Tsetlin automata states on first run 
+			# Allocates memory and prepares weights and Tsetlin automata states on first run
 			self.allocate_gpu_memory()
-
 			self.initialize_weights_and_ta_states()
-
 			self.first = False
 		elif not incremental:
 			# Re-initializes weights and Tsetlin automata states if training is not incremental
@@ -329,58 +353,69 @@ class CommonTsetlinMachine():
 			for e in range(number_of_examples):
 				class_sum_gpu = self.evaluate_hierarchy(encoded_X_hierarchy_training_gpu, e)
 
-
 				# Propagates the root value and any intermittent node values back to the leaves.
 				# The purpose is to determine which leaves only has True nodes on the path from leaf to root.
-				for d in range(self.depth-1, 0, -1):
+				for d in range(self.depth - 1, 0, -1):
 					kc = self._kernel_config(self.number_of_clauses * self.hierarchy_size[d + 1])
 					if self.hierarchy_structure[d][0] != OR_GROUP:
-						self.propagate_and_group_false_truth_values(*kc, (
-							self.hierarchy_votes[d-1],
-							self.hierarchy_votes[d],
-							np.int32(self.hierarchy_size[d + 1]),
-							np.int32(self.hierarchy_structure[d][1])
-						))
+						self.propagate_and_group_false_truth_values(
+							*kc,
+							(
+								self.hierarchy_votes[d - 1],
+								self.hierarchy_votes[d],
+								np.int32(self.hierarchy_size[d + 1]),
+								np.int32(self.hierarchy_structure[d][1]),
+							),
+						)
 					else:
-						self.propagate_or_group_false_truth_values(*kc, (
-							rng_state,
-							self.hierarchy_votes[d-1],
-							self.hierarchy_votes[d],
-							np.int32(self.hierarchy_size[d + 1]),
-							np.int32(self.hierarchy_structure[d][1]),
-							np.int32(e)
-						))
+						self.propagate_or_group_false_truth_values(
+							*kc,
+							(
+								rng_state,
+								self.hierarchy_votes[d - 1],
+								self.hierarchy_votes[d],
+								np.int32(self.hierarchy_size[d + 1]),
+								np.int32(self.hierarchy_structure[d][1]),
+								np.int32(e),
+							),
+						)
 
 				# Updates the clause components (leaves) based on the propagated truth values
-				self.update_hierarchy(*self.ker_conf_clauses, (
-					rng_state,
-					np.int32(self.number_of_outputs),
-					self.ta_state_hierarchy_gpu,
-					self.clause_weights_gpu,
-					self.hierarchy_votes[0],
-					np.int32(self.depth),
-					self.hierarchy_structure_factors_gpu,
-					self.hierarchy_structure_type_gpu,
-					class_sum_gpu,
-					encoded_X_hierarchy_training_gpu,
-					Y_gpu,
-					np.int32(e)
-				))
+				self.update_hierarchy(
+					*self.ker_conf_clauses,
+					(
+						rng_state,
+						np.int32(self.number_of_outputs),
+						self.ta_state_hierarchy_gpu,
+						self.clause_weights_gpu,
+						self.hierarchy_votes[0],
+						np.int32(self.depth),
+						self.hierarchy_structure_factors_gpu,
+						self.hierarchy_structure_type_gpu,
+						class_sum_gpu,
+						encoded_X_hierarchy_training_gpu,
+						Y_gpu,
+						np.int32(e),
+					),
+				)
 
 				# Updates the clause weights
-				if (self.tm_type in [WEIGHTED_TM, COALESCED_TM]):
-					self.update_weights(*self.ker_conf_clauses, (
-						rng_state,
-						np.int32(self.tm_type),
-						np.int32(self.number_of_outputs),
-						self.clause_weights_gpu,
-						self.hierarchy_votes[self.depth-1],
-						class_sum_gpu,
-						Y_gpu,
-						np.int32(e)
-					))
+				if self.tm_type in [WEIGHTED_TM, COALESCED_TM]:
+					self.update_weights(
+						*self.ker_conf_clauses,
+						(
+							rng_state,
+							np.int32(self.tm_type),
+							np.int32(self.number_of_outputs),
+							self.clause_weights_gpu,
+							self.hierarchy_votes[self.depth - 1],
+							class_sum_gpu,
+							Y_gpu,
+							np.int32(e),
+						),
+					)
 		return
-       
+
 	def _score(self, X, clip=True):
 		number_of_examples = X.shape[0]
 		encoded_X_hierarchy_test_gpu = self.encode_X(X)
@@ -399,11 +434,13 @@ class CommonTsetlinMachine():
 		Returns: Numpy array of shape (number_of_clauses, number_of_clause_components, number_of_literals_per_leaf)
 		"""
 		# Mem Allocation
-		ta_states_gpu = cp.zeros((self.number_of_clauses, self.hierarchy_size[1], self.number_of_literals_per_leaf), dtype=cp.uint32)
+		ta_states_gpu = cp.zeros(
+			(self.number_of_clauses, self.hierarchy_size[1], self.number_of_literals_per_leaf), dtype=cp.uint32
+		)
 
 		self.kernel_get_ta_states(
 			*self._kernel_config(self.number_of_clauses * self.hierarchy_size[1] * self.number_of_literals_per_leaf),
-			(self.ta_state_hierarchy_gpu, ta_states_gpu)
+			(self.ta_state_hierarchy_gpu, ta_states_gpu),
 		)
 
 		# Copy back to CPU
@@ -422,7 +459,7 @@ class CommonTsetlinMachine():
 		"""
 		# BFS top-down traversal
 		q = deque()
-		q.append((self.depth - 1, 0, 0)) # (level, node_id, group_id)
+		q.append((self.depth - 1, 0, 0))  # (level, node_id, group_id)
 
 		comp_grps = -1 * np.ones(self.hierarchy_size[1], dtype=np.int32)
 		while q:
@@ -434,7 +471,7 @@ class CommonTsetlinMachine():
 				continue
 
 			n_children = self.hierarchy_structure[level][1]
-			is_alt = (self.hierarchy_structure[level][0] == OR_ALTERNATIVES)
+			is_alt = self.hierarchy_structure[level][0] == OR_ALTERNATIVES
 			for child_pos in range(n_children):
 				child_id = node_id * n_children + child_pos
 				if is_alt:
@@ -450,7 +487,10 @@ class CommonTsetlinMachine():
 		half = self.number_of_literals_per_leaf // 2
 		lit_ids = np.arange(self.number_of_literals_per_leaf)
 		local_feats = lit_ids % half if self.append_negated else lit_ids
-		fmap = comp_grps[:, None] * (half if self.append_negated else self.number_of_literals_per_leaf) + local_feats[None, :]
+		fmap = (
+			comp_grps[:, None] * (half if self.append_negated else self.number_of_literals_per_leaf)
+			+ local_feats[None, :]
+		)
 
 		return fmap
 
@@ -470,7 +510,9 @@ class CommonTsetlinMachine():
 
 			hierarchy_votes_example = []
 			for d in range(self.depth):
-				hierarchy_votes_example.append(self.hierarchy_votes[d].get().reshape((self.number_of_clauses, int(self.hierarchy_size[d+1]))))
+				hierarchy_votes_example.append(
+					self.hierarchy_votes[d].get().reshape((self.number_of_clauses, int(self.hierarchy_size[d + 1])))
+				)
 
 			hierarchy_votes.append(hierarchy_votes_example)
 
@@ -478,9 +520,9 @@ class CommonTsetlinMachine():
 
 	def print_hierarchy(self, print_ta_state=False):
 		for i in range(self.number_of_clauses):
-			print("\nCLAUSE #%d: " % (i), end='')
+			print("\nCLAUSE #%d: " % (i), end="")
 
-			previous_index = np.ones((self.depth-1), dtype=np.int32)*-1
+			previous_index = np.ones((self.depth - 1), dtype=np.int32) * -1
 			for j in range(self.hierarchy_size[1]):
 				component_remainder = j
 				size = 1
@@ -495,27 +537,27 @@ class CommonTsetlinMachine():
 					component_remainder = component_remainder // self.hierarchy_structure[d][1]
 
 					if self.hierarchy_structure[d][0] != OR_ALTERNATIVES:
-						feature_base += size * depth_d_node_index 
-						size *= self.hierarchy_structure[d][1];
+						feature_base += size * depth_d_node_index
+						size *= self.hierarchy_structure[d][1]
 
-					if previous_index[d-1] == -1:
+					if previous_index[d - 1] == -1:
 						left.append("(")
-					elif depth_d_node_index == 0 and previous_index[d-1] != depth_d_node_index:
+					elif depth_d_node_index == 0 and previous_index[d - 1] != depth_d_node_index:
 						right.append(")")
 						left.insert(0, "(")
-					elif previous_index[d-1] != depth_d_node_index:
+					elif previous_index[d - 1] != depth_d_node_index:
 						inside.append(self.hierarchy_structure[d][0])
-					
-					previous_index[d-1] = depth_d_node_index
+
+					previous_index[d - 1] = depth_d_node_index
 
 				for s in right:
-					print(s, end='')
+					print(s, end="")
 
 				for s in inside:
-					print(s, end='')
+					print(s, end="")
 
 				for s in left:
-					print(s, end='')
+					print(s, end="")
 
 				l = []
 				for k in range(self.number_of_literals_per_leaf):
@@ -527,57 +569,87 @@ class CommonTsetlinMachine():
 								l.append("x%d" % (feature_base + k,))
 						else:
 							if print_ta_state:
-								l.append("¬x%d(%d)" % (feature_base + k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k)))
+								l.append(
+									"¬x%d(%d)"
+									% (feature_base + k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k))
+								)
 							else:
 								l.append("¬x%d" % (feature_base + k - self.number_of_literals_per_leaf // 2,))
-				
+
 				if len(l) > 1:
-					print("(" + " ∧ ".join(l) + ")", end = '')
+					print("(" + " ∧ ".join(l) + ")", end="")
 				elif len(l) == 1:
-					print(l[0], end = '')
+					print(l[0], end="")
 
 			print(")" * (self.depth - 1))
 
 	def save(self) -> dict:
 		return {
-			'ta_state_hierarchy': self.ta_state_hierarchy_gpu.get(),
-			'clause_weights': self.clause_weights_gpu.get(),
-			'number_of_outputs': self.number_of_outputs,
-			'min_y': self.min_y,
-			'max_y': self.max_y,
-			'params': {
-				'number_of_clauses': self.number_of_clauses,
-				'T': self.T,
-				's': self.s,
-				'q': self.q,
-				'hierarchy_structure': self.hierarchy_structure,
-				'boost_true_positive_feedback': self.boost_true_positive_feedback,
-				'number_of_state_bits': self.number_of_state_bits,
-				'append_negated': self.append_negated,
+			"ta_state_hierarchy": self.ta_state_hierarchy_gpu.get(),
+			"clause_weights": self.clause_weights_gpu.get(),
+			"number_of_outputs": self.number_of_outputs,
+			"min_y": self.min_y,
+			"max_y": self.max_y,
+			"params": {
+				"number_of_clauses": self.number_of_clauses,
+				"T": self.T,
+				"s": self.s,
+				"q": self.q,
+				"hierarchy_structure": self.hierarchy_structure,
+				"boost_true_positive_feedback": self.boost_true_positive_feedback,
+				"number_of_state_bits": self.number_of_state_bits,
+				"append_negated": self.append_negated,
 			},
-			'negative_clauses': self.negative_clauses,
-			'tm_type': self.tm_type,
-			'flip_polarity': self.flip_polarity,
-			'weighted_clauses': getattr(self, 'weighted_clauses', None),
+			"negative_clauses": self.negative_clauses,
+			"tm_type": self.tm_type,
+			"flip_polarity": self.flip_polarity,
+			"weighted_clauses": getattr(self, "weighted_clauses", None),
 		}
 
 	def load(self, state_dict: dict):
-		self.number_of_outputs = state_dict['number_of_outputs']
-		self.min_y = state_dict['min_y']
-		self.max_y = state_dict['max_y']
+		self.number_of_outputs = state_dict["number_of_outputs"]
+		self.min_y = state_dict["min_y"]
+		self.max_y = state_dict["max_y"]
 
 		self.allocate_gpu_memory()
 
-		self.ta_state_hierarchy_gpu = cp.asarray(state_dict['ta_state_hierarchy'], dtype=cp.uint32)
-		self.clause_weights_gpu = cp.asarray(state_dict['clause_weights'], dtype=cp.int32)
+		self.ta_state_hierarchy_gpu = cp.asarray(state_dict["ta_state_hierarchy"], dtype=cp.uint32)
+		self.clause_weights_gpu = cp.asarray(state_dict["clause_weights"], dtype=cp.int32)
 
 		self.first = False
 
-	
+
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, hierarchy_structure=((AND_GROUP, 1)), q=1.0, log_scale=False, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(
+		self,
+		number_of_clauses,
+		T,
+		s,
+		hierarchy_structure=((AND_GROUP, 1),),
+		q=1.0,
+		log_scale=False,
+		boost_true_positive_feedback=1,
+		number_of_state_bits=8,
+		append_negated=True,
+		grid=(16 * 13, 1, 1),
+		block=(128, 1, 1),
+		seed=None,
+	):
 		self.negative_clauses = 1
-		super().__init__(number_of_clauses, T, s, hierarchy_structure, q=q, log_scale=log_scale, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(
+			number_of_clauses,
+			T,
+			s,
+			hierarchy_structure,
+			q=q,
+			log_scale=log_scale,
+			boost_true_positive_feedback=boost_true_positive_feedback,
+			number_of_state_bits=number_of_state_bits,
+			append_negated=append_negated,
+			grid=grid,
+			block=block,
+			seed=seed,
+		)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -587,9 +659,9 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 
 		self.max_y = None
 		self.min_y = None
-		
+
 		encoded_Y = np.where(Y == 1, self.T, -self.T).astype(np.int32)
-		self._fit(X, encoded_Y, epochs = epochs, incremental = incremental)
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
 
 		return
 
@@ -600,13 +672,41 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 	def predict(self, X):
 		return (self.score(X) >= 0).astype(np.uint32).transpose()
 
+
 class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, q=1.0, log_scale=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(
+		self,
+		number_of_clauses,
+		T,
+		s,
+		q=1.0,
+		log_scale=False,
+		hierarchy_structure=((AND_GROUP, 1),),
+		boost_true_positive_feedback=1,
+		number_of_state_bits=8,
+		append_negated=True,
+		grid=(16 * 13, 1, 1),
+		block=(128, 1, 1),
+		seed=None,
+	):
 		self.negative_clauses = 1
 		self.tm_type = COALESCED_TM
 		self.flip_polarity = 1
 
-		super().__init__(number_of_clauses, T, s, q=q, log_scale=log_scale, hierarchy_structure=hierarchy_structure, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(
+			number_of_clauses,
+			T,
+			s,
+			q=q,
+			log_scale=log_scale,
+			hierarchy_structure=hierarchy_structure,
+			boost_true_positive_feedback=boost_true_positive_feedback,
+			number_of_state_bits=number_of_state_bits,
+			append_negated=append_negated,
+			grid=grid,
+			block=block,
+			seed=seed,
+		)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -616,12 +716,12 @@ class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
 
 		self.max_y = None
 		self.min_y = None
-		
-		encoded_Y = np.empty((Y.shape[0], self.number_of_outputs), dtype = np.int32)
-		for i in range(self.number_of_outputs):
-			encoded_Y[:,i] = np.where(Y == i, self.T, -self.T)
 
-		self._fit(X, encoded_Y, epochs = epochs, incremental = incremental)
+		encoded_Y = np.empty((Y.shape[0], self.number_of_outputs), dtype=np.int32)
+		for i in range(self.number_of_outputs):
+			encoded_Y[:, i] = np.where(Y == i, self.T, -self.T)
+
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
 
 		return
 
@@ -632,8 +732,24 @@ class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
 	def predict(self, X):
 		return np.argmax(self.score(X), axis=0)
 
+
 class MultiClassTsetlinMachine:
-	def __init__(self, number_of_clauses, T, s, q=1.0, log_scale=False, weighted_clauses=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(
+		self,
+		number_of_clauses,
+		T,
+		s,
+		q=1.0,
+		log_scale=False,
+		weighted_clauses=False,
+		hierarchy_structure=((AND_GROUP, 1)),
+		boost_true_positive_feedback=1,
+		number_of_state_bits=8,
+		append_negated=True,
+		grid=(16 * 13, 1, 1),
+		block=(128, 1, 1),
+		seed=None,
+	):
 		self.number_of_clauses = number_of_clauses
 		self.T = T
 		self.s = s
@@ -656,20 +772,36 @@ class MultiClassTsetlinMachine:
 		if not self.configured:
 			self.tms = []
 			for i in range(self.number_of_outputs):
-				self.tms.append(TsetlinMachine(self.number_of_clauses, self.T, self.s, q=self.q, log_scale=self.log_scale, weighted_clauses=self.weighted_clauses, hierarchy_structure=self.hierarchy_structure, boost_true_positive_feedback=self.boost_true_positive_feedback, number_of_state_bits=self.number_of_state_bits, append_negated=self.append_negated, grid=self.grid, block=self.block, seed=self.seed+i))
+				self.tms.append(
+					TsetlinMachine(
+						self.number_of_clauses,
+						self.T,
+						self.s,
+						q=self.q,
+						log_scale=self.log_scale,
+						weighted_clauses=self.weighted_clauses,
+						hierarchy_structure=self.hierarchy_structure,
+						boost_true_positive_feedback=self.boost_true_positive_feedback,
+						number_of_state_bits=self.number_of_state_bits,
+						append_negated=self.append_negated,
+						grid=self.grid,
+						block=self.block,
+						seed=self.seed + i,
+					)
+				)
 
 			self.configured = True
 
-		encoded_Y = np.empty(Y.shape[0], dtype = np.int32)
+		encoded_Y = np.empty(Y.shape[0], dtype=np.int32)
 
 		for epoch in range(epochs):
 			for i in range(self.number_of_outputs):
-				target_X = X[Y==i]
+				target_X = X[Y == i]
 
-				not_target_X = X[Y!=i]
-				not_target_index = np.random.rand(not_target_X.shape[0]) <= 1.0/(self.number_of_outputs - 1)
+				not_target_X = X[Y != i]
+				not_target_index = np.random.rand(not_target_X.shape[0]) <= 1.0 / (self.number_of_outputs - 1)
 
-				balanced_X = np.vstack((target_X, not_target_X[not_target_index,:]))
+				balanced_X = np.vstack((target_X, not_target_X[not_target_index, :]))
 				balanced_Y = np.hstack((np.ones(target_X.shape[0]), np.zeros(not_target_X.shape[0])))
 				index = np.arange(balanced_X.shape[0])
 				np.random.shuffle(index)
@@ -680,7 +812,7 @@ class MultiClassTsetlinMachine:
 	def score(self, X):
 		class_sums = np.empty((self.number_of_outputs, X.shape[0]), dtype=np.int32)
 		for i in range(self.number_of_outputs):
-			class_sums[i,:] = self.tms[i].score(X)
+			class_sums[i, :] = self.tms[i].score(X)
 
 		return class_sums
 
@@ -689,36 +821,64 @@ class MultiClassTsetlinMachine:
 
 	def save(self) -> dict:
 		return {
-			'number_of_outputs': self.number_of_outputs,
-			'tms': [t.save() for t in self.tms],
-			'params': {
-				'number_of_clauses': self.number_of_clauses,
-				'T': self.T,
-				's': self.s,
-				'q': self.q,
-				'weighted_clauses': self.weighted_clauses,
-				'hierarchy_structure': self.hierarchy_structure,
-				'boost_true_positive_feedback': self.boost_true_positive_feedback,
-				'number_of_state_bits': self.number_of_state_bits,
-				'append_negated': self.append_negated,
-				'grid': self.grid,
-				'block': self.block,
+			"number_of_outputs": self.number_of_outputs,
+			"tms": [t.save() for t in self.tms],
+			"params": {
+				"number_of_clauses": self.number_of_clauses,
+				"T": self.T,
+				"s": self.s,
+				"q": self.q,
+				"weighted_clauses": self.weighted_clauses,
+				"hierarchy_structure": self.hierarchy_structure,
+				"boost_true_positive_feedback": self.boost_true_positive_feedback,
+				"number_of_state_bits": self.number_of_state_bits,
+				"append_negated": self.append_negated,
+				"grid": self.grid,
+				"block": self.block,
 			},
 		}
 
 	def load(self, state_dict: dict):
-		self.number_of_outputs = state_dict['number_of_outputs']
+		self.number_of_outputs = state_dict["number_of_outputs"]
 
 		self.tms = []
-		for tm_state in state_dict['tms']:
-			t = TsetlinMachine(self.number_of_clauses, self.T, self.s, weighted_clauses=self.weighted_clauses, hierarchy_structure=self.hierarchy_structure, q=self.q, boost_true_positive_feedback=self.boost_true_positive_feedback, number_of_state_bits=self.number_of_state_bits, append_negated=self.append_negated, grid=self.grid, block=self.block)
+		for tm_state in state_dict["tms"]:
+			t = TsetlinMachine(
+				self.number_of_clauses,
+				self.T,
+				self.s,
+				weighted_clauses=self.weighted_clauses,
+				hierarchy_structure=self.hierarchy_structure,
+				q=self.q,
+				boost_true_positive_feedback=self.boost_true_positive_feedback,
+				number_of_state_bits=self.number_of_state_bits,
+				append_negated=self.append_negated,
+				grid=self.grid,
+				block=self.block,
+			)
 			t.load(tm_state)
 			self.tms.append(t)
 
 		self.configured = True
 
+
 class TsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, q=1.0, log_scale=False, weighted_clauses=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(
+		self,
+		number_of_clauses,
+		T,
+		s,
+		q=1.0,
+		log_scale=False,
+		weighted_clauses=False,
+		hierarchy_structure=((AND_GROUP, 1),),
+		boost_true_positive_feedback=1,
+		number_of_state_bits=8,
+		append_negated=True,
+		grid=(16 * 13, 1, 1),
+		block=(128, 1, 1),
+		seed=None,
+	):
 		self.negative_clauses = 1
 		self.flip_polarity = 0
 
@@ -727,52 +887,80 @@ class TsetlinMachine(CommonTsetlinMachine):
 		else:
 			self.tm_type = VANILLA_TM
 
-		super().__init__(number_of_clauses, T, s, q=q, log_scale=log_scale, hierarchy_structure=hierarchy_structure, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(
+			number_of_clauses,
+			T,
+			s,
+			q=q,
+			log_scale=log_scale,
+			hierarchy_structure=hierarchy_structure,
+			boost_true_positive_feedback=boost_true_positive_feedback,
+			number_of_state_bits=number_of_state_bits,
+			append_negated=append_negated,
+			grid=grid,
+			block=block,
+			seed=seed,
+		)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
-
 		self.number_of_outputs = 1
-
 		self.max_y = None
 		self.min_y = None
-		
 		encoded_Y = np.where(Y == 1, self.T, -self.T).astype(np.int32)
-
-		self._fit(X, encoded_Y, epochs = epochs, incremental = incremental)
-
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
 		return
 
 	def score(self, X):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
-		return self._score(X)[0,:]
+		return self._score(X)[0, :]
 
 	def predict(self, X):
 		return (self.score(X) >= 0).astype(np.int32)
 
+
 class RegressionTsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, log_scale=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(
+		self,
+		number_of_clauses,
+		T,
+		s,
+		log_scale=False,
+		hierarchy_structure=((AND_GROUP, 1),),
+		boost_true_positive_feedback=1,
+		number_of_state_bits=8,
+		append_negated=True,
+		grid=(16 * 13, 1, 1),
+		block=(128, 1, 1),
+		seed=None,
+	):
 		self.negative_clauses = 0
 		self.flip_polarity = 0
-
-		super().__init__(number_of_clauses, T, s, log_scale=log_scale, hierarchy_structure=hierarchy_structure, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(
+			number_of_clauses,
+			T,
+			s,
+			log_scale=log_scale,
+			hierarchy_structure=hierarchy_structure,
+			boost_true_positive_feedback=boost_true_positive_feedback,
+			number_of_state_bits=number_of_state_bits,
+			append_negated=append_negated,
+			grid=grid,
+			block=block,
+			seed=seed,
+		)
 
 	def fit(self, X, Y, epochs=100, incremental=False):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
-		
 		self.number_of_outputs = 1
 		self.patch_dim = (X.shape[1], 1, 1)
-
 		self.max_y = np.max(Y)
 		self.min_y = np.min(Y)
-	
-		encoded_Y = ((Y - self.min_y)/(self.max_y - self.min_y)*self.T).astype(np.int32)
-			
-		self._fit(X, encoded_Y, epochs = epochs, incremental = incremental)
 
+		encoded_Y = ((Y - self.min_y) / (self.max_y - self.min_y) * self.T).astype(np.int32)
+		self._fit(X, encoded_Y, epochs=epochs, incremental=incremental)
 		return
 
 	def predict(self, X):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
-		
-		return 1.0*(self._score(X)[0,:])*(self.max_y - self.min_y)/(self.T) + self.min_y
+		return 1.0 * (self._score(X)[0, :]) * (self.max_y - self.min_y) / (self.T) + self.min_y
