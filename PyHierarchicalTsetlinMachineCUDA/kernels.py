@@ -28,12 +28,12 @@ code_header = """
 	typedef unsigned long long ull;
 	typedef unsigned int uint;
 
-	__device__ curandState rng_states[MAX_THREADS];
+	__device__ curandState state[MAX_THREADS];
 
 	extern "C" __global__ void init_rng_states(ull seed) {
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 		if (index < MAX_THREADS) {
-			curand_init(seed, index, 0, &rng_states[index]);
+			curand_init(seed, index, 0, &state[index]);
 		}
 	}
 
@@ -507,7 +507,8 @@ code_update = """
 
 			int non_zero_children[361];
 
-			curandState localState = rng_states[index];
+			/* Copy state to local memory for efficiency */
+			curandState localState = state[index];
 
 			// If a group node is false, all children are made false.
 			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
@@ -569,7 +570,7 @@ code_update = """
 				}
 			}
 
-			rng_states[index] = localState;
+			state[index] = localState;
 		}
 
 		__global__ void propagate_or_group_false_truth_values_old(float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children, int example)
@@ -579,7 +580,8 @@ code_update = """
 
 			int non_zero_children[361];
 
-			curandState localState = rng_states[index];
+			/* Copy state to local memory for efficiency */
+			curandState localState = state[index];
 
 			// If a group node is false, all children are made false.
 			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
@@ -620,7 +622,7 @@ code_update = """
 				}
 			}
 
-			rng_states[index] = localState;
+			state[index] = localState;
 		}
 
 		__global__ void evaluate_or_alternatives(float *child_input, float *or_alternatives_node_output, int number_of_or_alternatives_nodes, int number_of_or_alternatives)
@@ -795,7 +797,8 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			curandState localState = rng_states[index];
+			/* Copy state to local memory for efficiency */
+			curandState localState = state[index];
 
 			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
 
@@ -849,7 +852,7 @@ code_update = """
 				}
 			}
 
-			rng_states[index] = localState;
+			state[index] = localState;
 		}
 
 		// Update state of Tsetlin Automata team
@@ -858,7 +861,8 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			curandState localState = rng_states[index];
+			/* Copy state to local memory for efficiency */
+			curandState localState = state[index];
 
 			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
 
@@ -909,7 +913,7 @@ code_update = """
 				}
 			}
 
-			rng_states[index] = localState;
+			state[index] = localState;
 		}
 
 
@@ -919,7 +923,8 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			curandState localState = rng_states[index];
+			/* Copy state to local memory for efficiency */
+			curandState localState = state[index];
 
 			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
 				for (unsigned long long class_id = 0; class_id < number_of_outputs; ++class_id) {
@@ -938,7 +943,7 @@ code_update = """
 				}
 			}
 
-			rng_states[index] = localState;
+			state[index] = localState;
 		}
 
 		// Update state of Tsetlin Automata team
@@ -947,7 +952,7 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			curandState localState = rng_states[index];
+			curandState localState = state[index];
 
 			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
 				for (unsigned long long class_id = 0; class_id < number_of_outputs; ++class_id) {
@@ -961,7 +966,7 @@ code_update = """
 				}
 			}
 
-			rng_states[index] = localState;
+			state[index] = localState;
 		}
     }
 """
