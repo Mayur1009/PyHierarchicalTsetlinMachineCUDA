@@ -157,6 +157,12 @@ class CommonTsetlinMachine():
 		mod_clauses = cp.RawModule(code=parameters + kernels.code_clauses)
 		self.kernel_get_ta_states = mod_clauses.get_function("get_ta_states")
 
+		self.ker_conf_clauses = self._kernel_config(self.number_of_clauses)
+		self.ker_conf_clause_components = self._kernel_config(self.number_of_clauses * self.hierarchy_size[1])
+
+	def _kernel_config(self, N):
+		return ((min((N + self.block[0] - 1) // self.block[0], self.grid[0]), 1, 1), self.block)
+
 	def encode_X(self, X):
 		number_of_examples = X.shape[0]
 
@@ -166,13 +172,13 @@ class CommonTsetlinMachine():
 
 		# Prepares for leaf encoding of the input data
 		self.prepare_encode_hierarchy(
-			self.grid, self.block,
+			*self._kernel_config(number_of_examples * self.number_of_literal_chunks),
 			(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_literal_chunks), np.int32(number_of_examples))
 		)
 
 		# Encodes the input data split across the leaves
 		self.encode_hierarchy(
-			self.grid, self.block,
+			*self._kernel_config(number_of_examples),
 			(X_gpu, encoded_X_hierarchy_gpu, np.int32(self.number_of_features_hierarchy), np.int32(self.number_of_literal_chunks), np.int32(self.hierarchy_size[1]), np.int32(self.number_of_features_per_leaf), np.int32(self.number_of_literal_chunks_per_leaf), np.int32(self.append_negated), np.int32(number_of_examples))
 		)
 
@@ -215,7 +221,7 @@ class CommonTsetlinMachine():
 
 	def initialize_weights_and_ta_states(self):
 		class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
-		self.prepare_weights(self.grid, self.block, (
+		self.prepare_weights(*self.ker_conf_clauses, (
 			np.uint64(self.seed),
 			np.int32(self.tm_type),
 			np.int32(self.number_of_outputs),
@@ -223,7 +229,7 @@ class CommonTsetlinMachine():
 			class_sum_gpu
 		))
 
-		self.prepare_hierarchy(self.grid, self.block, (
+		self.prepare_hierarchy(*self.ker_conf_clauses, (
 			np.uint64(self.seed),
 			np.int32(self.number_of_outputs),
 			self.ta_state_hierarchy_gpu,
@@ -236,7 +242,7 @@ class CommonTsetlinMachine():
 		class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
 
 		# Evaluates all the hierarchy leaves in parallel
-		self.evaluate_leaves(self.grid, self.block, (
+		self.evaluate_leaves(*self.ker_conf_clause_components, (
 			self.ta_state_hierarchy_gpu,
 			self.component_weights_gpu,
 			self.hierarchy_votes[0],
@@ -249,22 +255,23 @@ class CommonTsetlinMachine():
 
 		# Propagates votes bottom-up in the hierarchy, starting from the clause components (leaves)
 		for d in range(1, self.depth):
+			kc = self._kernel_config(self.number_of_clauses * self.hierarchy_size[d + 1])
 			if (self.hierarchy_structure[d][0] == AND_GROUP):
-				self.evaluate_and_groups(self.grid, self.block, (
+				self.evaluate_and_groups(*kc, (
 					self.hierarchy_votes[d-1],
 					self.hierarchy_votes[d],
 					np.int32(self.hierarchy_size[d + 1]),
 					np.int32(self.hierarchy_structure[d][1])
 				))
 			elif self.hierarchy_structure[d][0] == OR_GROUP:
-				self.evaluate_or_groups(self.grid, self.block, (
+				self.evaluate_or_groups(*kc, (
 					self.hierarchy_votes[d-1],
 					self.hierarchy_votes[d],
 					np.int32(self.hierarchy_size[d + 1]),
 					np.int32(self.hierarchy_structure[d][1])
 				))
 			elif self.hierarchy_structure[d][0] == OR_ALTERNATIVES:
-				self.evaluate_or_alternatives(self.grid, self.block, (
+				self.evaluate_or_alternatives(*kc, (
 					self.hierarchy_votes[d-1],
 					self.hierarchy_votes[d],
 					np.int32(self.hierarchy_size[d + 1]),
@@ -287,7 +294,7 @@ class CommonTsetlinMachine():
 		# 	cuda.Context.synchronize()
 
 		# Adds up the votes from each clause (hierarchy root)
-		self.evaluate_final(self.grid, self.block, (
+		self.evaluate_final(*self.ker_conf_clauses, (
 			np.int32(self.number_of_outputs),
 			self.hierarchy_votes[self.depth-1],
 			self.clause_weights_gpu,
@@ -335,15 +342,16 @@ class CommonTsetlinMachine():
 				# Propagates the root value and any intermittent node values back to the leaves.
 				# The purpose is to determine which leaves only has True nodes on the path from leaf to root.
 				for d in range(self.depth-1, 0, -1):
+					kc = self._kernel_config(self.number_of_clauses * self.hierarchy_size[d + 1])
 					if self.hierarchy_structure[d][0] != OR_GROUP:
-						self.propagate_and_group_false_truth_values(self.grid, self.block, (
+						self.propagate_and_group_false_truth_values(*kc, (
 							self.hierarchy_votes[d-1],
 							self.hierarchy_votes[d],
 							np.int32(self.hierarchy_size[d + 1]),
 							np.int32(self.hierarchy_structure[d][1])
 						))
 					else:
-						self.propagate_or_group_false_truth_values(self.grid, self.block, (
+						self.propagate_or_group_false_truth_values(*kc, (
 							np.uint64(self.seed),
 							self.hierarchy_votes[d-1],
 							self.hierarchy_votes[d],
@@ -353,7 +361,7 @@ class CommonTsetlinMachine():
 						))
 
 				# Updates the clause components (leaves) based on the propagated truth values
-				self.update_hierarchy(self.grid, self.block, (
+				self.update_hierarchy(*self.ker_conf_clauses, (
 					np.uint64(self.seed),
 					np.int32(self.number_of_outputs),
 					self.ta_state_hierarchy_gpu,
@@ -370,7 +378,7 @@ class CommonTsetlinMachine():
 
 				# Updates the clause weights
 				if (self.tm_type in [WEIGHTED_TM, COALESCED_TM]):
-					self.update_weights(self.grid, self.block, (
+					self.update_weights(*self.ker_conf_clauses, (
 						np.uint64(self.seed),
 						np.int32(self.tm_type),
 						np.int32(self.number_of_outputs),
@@ -402,10 +410,10 @@ class CommonTsetlinMachine():
 		# Mem Allocation
 		ta_states_gpu = cp.zeros((self.number_of_clauses, self.hierarchy_size[1], self.number_of_literals_per_leaf), dtype=cp.uint32)
 
-		# Calculate grid size based on the kernel
-		total = self.number_of_clauses * self.hierarchy_size[1] * self.number_of_literals_per_leaf
-		grid = (((total + self.block[0] - 1) // self.block[0]), 1, 1)
-		self.kernel_get_ta_states(grid, self.block, (self.ta_state_hierarchy_gpu, ta_states_gpu))
+		self.kernel_get_ta_states(
+			*self._kernel_config(self.number_of_clauses * self.hierarchy_size[1] * self.number_of_literals_per_leaf),
+			(self.ta_state_hierarchy_gpu, ta_states_gpu)
+		)
 
 		# Copy back to CPU
 		return ta_states_gpu.get()
