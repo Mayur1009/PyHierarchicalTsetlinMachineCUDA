@@ -13,12 +13,11 @@ setup(
    packages=['PyHierarchicalTsetlinMachineCUDA'],
    install_requires=[
 		'numpy',
-		'pycuda',
+		'cupy-cuda12x[ctk]',
 		'scipy',
 		'scikit-learn',
 		'scikit-image',
 		'networkx',
-		'cupy-cuda12x[ctk]',
 	],
 	extras_require={
 		'examples': ['tensorflow', 'matplotlib', 'pygraphviz'],
