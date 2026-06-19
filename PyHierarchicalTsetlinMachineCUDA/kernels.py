@@ -19,9 +19,33 @@
 # SOFTWARE.
 
 code_header = """
-	#include <curand_kernel.h>
-	
-	#define NEG_INFINITY (-1 * INFINITY)
+	#define INFINITY __int_as_float(0x7f800000)
+	#define NEG_INFINITY (-INFINITY)
+	#define INT_MAX ((int)0x7fffffff)
+
+	typedef unsigned long long ull;
+	typedef unsigned int uint;
+
+	__device__ inline ull hash_combine(ull a, ull b) { return a ^ (b + 0x9e3779b97f4a7c15ULL + (a << 6) + (a >> 2)); }
+
+	__device__ inline ull rng_hash(ull seed, ull a, ull b, ull c) {
+		ull k = hash_combine(seed, a);
+		k = hash_combine(k, b);
+		k = hash_combine(k, c);
+		return k;
+	}
+
+	__device__ inline uint rand_uint(ull key, uint *counter) {
+		ull x = key ^ (ull)((*counter)++);
+		x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ULL;
+		x = (x ^ (x >> 27)) * 0x94d049bb133111ebULL;
+		x = x ^ (x >> 31);
+		return (uint)(x >> 32);
+	}
+
+	__device__ inline float rand_uniform(ull key, uint *counter) {
+		return (float)rand_uint(key, counter) * 0x1p-32f;
+	}
 
 	#define INT_SIZE 32ULL
 
@@ -30,12 +54,6 @@ code_header = """
 	#else
 	#define FILTER_HIERARCHICAL 0xffffffff
 	#endif
-
-	#define VANILLA_TM 0
-
-	#define WEIGHTED_TM 1
-
-	#define COALESCED_TM 2
 """
 
 code_update = """
@@ -84,18 +102,18 @@ code_update = """
 			} 
 		}
 
-		__device__ inline void update_clause_weight(curandState *localState, int tm_type, int number_of_outputs, int *clause_weight, int clause_output, int y, float class_sum)
+		__device__ inline void update_clause_weight(ull key, uint *counter, int tm_type, int number_of_outputs, int *clause_weight, int clause_output, int y, float class_sum)
 		{
 			int target = 1 - 2*(class_sum > y);
-			
-			if (target == -1 && curand_uniform(localState) > 1.0*Q/max(1, number_of_outputs-1)) {
+
+			if (target == -1 && rand_uniform(key, counter) > 1.0f*Q/max(1, number_of_outputs-1)) {
 				return;
 			}
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
-		
+
 			float absolute_prediction_error = fabsf(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			if (rand_uniform(key, counter) <= 1.0f*absolute_prediction_error/(2*THRESHOLD)) {
 				if (target*sign > 0) {
 					if (clause_output && abs(*clause_weight) < INT_MAX) {
 						(*clause_weight) += sign;
@@ -114,18 +132,18 @@ code_update = """
 			}
 		}
 
-		__device__ inline void update_clause_weight_old(curandState *localState, int tm_type, int number_of_outputs, int *clause_weight, int clause_output, int y, int class_sum)
+		__device__ inline void update_clause_weight_old(ull key, uint *counter, int tm_type, int number_of_outputs, int *clause_weight, int clause_output, int y, int class_sum)
 		{
 			int target = 1 - 2*(class_sum > y);
-			
-			if (target == -1 && curand_uniform(localState) > 1.0*Q/max(1, number_of_outputs-1)) {
+
+			if (target == -1 && rand_uniform(key, counter) > 1.0f*Q/max(1, number_of_outputs-1)) {
 				return;
 			}
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
-		
+
 			int absolute_prediction_error = abs(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			if (rand_uniform(key, counter) <= 1.0f*absolute_prediction_error/(2*THRESHOLD)) {
 				if (target*sign > 0) {
 					if (clause_output && abs(*clause_weight) < INT_MAX) {
 						(*clause_weight) += sign;
@@ -144,25 +162,25 @@ code_update = """
 			}
 		}
 
-		__device__ inline void update_component_hierarchy(curandState *localState, int number_of_outputs, int *clause_weight, unsigned int *ta_state, int component_output, int *X, int y, float class_sum)
+		__device__ inline void update_component_hierarchy(ull key, uint *counter, int number_of_outputs, int *clause_weight, unsigned int *ta_state, int component_output, int *X, int y, float class_sum)
 		{
 			int target = 1 - 2*(class_sum > y);
 
-			if (target == -1 && curand_uniform(localState) > 1.0*Q/max(1, number_of_outputs-1)) {
+			if (target == -1 && rand_uniform(key, counter) > 1.0f*Q/max(1, number_of_outputs-1)) {
 				return;
 			}
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
-		
+
 			float absolute_prediction_error = fabsf(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			if (rand_uniform(key, counter) <= 1.0f*absolute_prediction_error/(2*THRESHOLD)) {
 				if (target*sign > 0) {
 					// Type I Feedback
 					for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
 						// Generate random bit values
 						unsigned int la_feedback = 0;
 						for (int b = 0; b < INT_SIZE; ++b) {
-							if (curand_uniform(localState) <= 1.0/S) {
+							if (rand_uniform(key, counter) <= 1.0f/S) {
 								la_feedback |= (1 << b);
 							}
 						}
@@ -189,26 +207,25 @@ code_update = """
 			}
 		}
 
-		__device__ inline void update_component_hierarchy_old(curandState *localState, int number_of_outputs, int *clause_weight, unsigned int *ta_state, int component_output, int *X, int y, int class_sum)
+		__device__ inline void update_component_hierarchy_old(ull key, uint *counter, int number_of_outputs, int *clause_weight, unsigned int *ta_state, int component_output, int *X, int y, int class_sum)
 		{
 			int target = 1 - 2*(class_sum > y);
-			
-			if (target == -1 && curand_uniform(localState) > 1.0*Q/max(1, number_of_outputs-1)) {
+
+			if (target == -1 && rand_uniform(key, counter) > 1.0f*Q/max(1, number_of_outputs-1)) {
 				return;
 			}
-			
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
-		
+
 			int absolute_prediction_error = abs(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			if (rand_uniform(key, counter) <= 1.0f*absolute_prediction_error/(2*THRESHOLD)) {
 				if (target*sign > 0) {
 					// Type I Feedback
 					for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
 						// Generate random bit values
 						unsigned int la_feedback = 0;
 						for (int b = 0; b < INT_SIZE; ++b) {
-							if (curand_uniform(localState) <= 1.0/S) {
+							if (rand_uniform(key, counter) <= 1.0f/S) {
 								la_feedback |= (1 << b);
 							}
 						}
@@ -493,15 +510,16 @@ code_update = """
 			}
 		}
 
-		__global__ void propagate_or_group_false_truth_values(curandState *state, float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children)
+		__global__ void propagate_or_group_false_truth_values(ull seed, float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
 			int non_zero_children[361];
 
-			/* Copy state to local memory for efficiency */  
-			curandState localState = state[index];
+			ull tid = (ull)(blockIdx.x * blockDim.x + threadIdx.x);
+			ull key = rng_hash(seed, tid, (ull)example, 0xDEADBEEFULL);
+			uint counter = 0;
 
 			// If a group node is false, all children are made false.
 			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
@@ -550,11 +568,11 @@ code_update = """
 				if (group_node_output[group_node] != -1) {
 					int selected_child;
 					if (number_of_non_zero_children > 0) {
-						selected_child = non_zero_children[curand(&localState) % number_of_non_zero_children];
+						selected_child = non_zero_children[rand_uint(key, &counter) % number_of_non_zero_children];
 					} else {
-						selected_child = curand(&localState) % number_of_group_node_children;
+						selected_child = rand_uint(key, &counter) % number_of_group_node_children;
 					}
-					
+
 					for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
 						if (selected_child != or_addend) {
 							child_input[group_node*number_of_group_node_children + or_addend] = -1;
@@ -562,19 +580,18 @@ code_update = """
 					}
 				}
 			}
-
-			state[index] = localState;
 		}
 
-		__global__ void propagate_or_group_false_truth_values_old(curandState *state, float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children)
+		__global__ void propagate_or_group_false_truth_values_old(ull seed, float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
 			int non_zero_children[361];
 
-			/* Copy state to local memory for efficiency */  
-			curandState localState = state[index];
+			ull tid = (ull)(blockIdx.x * blockDim.x + threadIdx.x);
+			ull key = rng_hash(seed, tid, (ull)example, 0xDEADBEEFULL);
+			uint counter = 0;
 
 			// If a group node is false, all children are made false.
 			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
@@ -602,11 +619,11 @@ code_update = """
 				if (group_node_output[group_node] != -1) {
 					int selected_child;
 					if (number_of_non_zero_children > 0) {
-						selected_child = non_zero_children[curand(&localState) % number_of_non_zero_children];
+						selected_child = non_zero_children[rand_uint(key, &counter) % number_of_non_zero_children];
 					} else {
-						selected_child = curand(&localState) % number_of_group_node_children;
+						selected_child = rand_uint(key, &counter) % number_of_group_node_children;
 					}
-					
+
 					for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
 						if (selected_child != or_addend) {
 							child_input[group_node*number_of_group_node_children + or_addend] = -1;
@@ -614,8 +631,6 @@ code_update = """
 					}
 				}
 			}
-
-			state[index] = localState;
 		}
 
 		__global__ void evaluate_or_alternatives(float *child_input, float *or_alternatives_node_output, int number_of_or_alternatives_nodes, int number_of_or_alternatives)
@@ -785,13 +800,14 @@ code_update = """
 		}
 
 		// Update state of Tsetlin Automata team
-		__global__ void update_hierarchy(curandState *state, int number_of_outputs, unsigned int *global_ta_state, int *clause_weights, float *component_output, int depth, int *hierarchy_structure_factors, int *hierarchy_structure_type, float *class_sum, int *X, int *y, int example)
+		__global__ void update_hierarchy(ull seed, int number_of_outputs, unsigned int *global_ta_state, int *clause_weights, float *component_output, int depth, int *hierarchy_structure_factors, int *hierarchy_structure_type, float *class_sum, int *X, int *y, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			/* Copy state to local memory for efficiency */  
-			curandState localState = state[index];
+			ull tid = (ull)(blockIdx.x * blockDim.x + threadIdx.x);
+			ull key = rng_hash(seed, tid, (ull)example, 0xBADC0FEEULL);
+			uint counter = 0;
 			
 			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
 
@@ -838,24 +854,23 @@ code_update = """
 					}
 
 					#if LOG_SCALE == 1
-						update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component] != NEG_INFINITY, &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
+						update_component_hierarchy(key, &counter, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component] != NEG_INFINITY, &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
 					#else
-						update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component] > 0, &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
+						update_component_hierarchy(key, &counter, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component] > 0, &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
 					#endif
 				}
 			}
-		
-			state[index] = localState;
 		}
 
 		// Update state of Tsetlin Automata team
-		__global__ void update_hierarchy_old(curandState *state, int number_of_outputs, unsigned int *global_ta_state, int *clause_weights, float *component_output, int depth, int *hierarchy_structure_factors, int *hierarchy_structure_type, int *class_sum, int *X, int *y, int example)
+		__global__ void update_hierarchy_old(ull seed, int number_of_outputs, unsigned int *global_ta_state, int *clause_weights, float *component_output, int depth, int *hierarchy_structure_factors, int *hierarchy_structure_type, int *class_sum, int *X, int *y, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			/* Copy state to local memory for efficiency */  
-			curandState localState = state[index];
+			ull tid = (ull)(blockIdx.x * blockDim.x + threadIdx.x);
+			ull key = rng_hash(seed, tid, (ull)example, 0xBADC0FEEULL);
+			uint counter = 0;
 			
 			int *Xi = &X[(unsigned long long)example*LITERAL_CHUNKS];
 
@@ -902,22 +917,21 @@ code_update = """
 						local_class_sum = -THRESHOLD;
 					}
 
-					update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, (int) component_output[clause_component], &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
+					update_component_hierarchy(key, &counter, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, (int) component_output[clause_component], &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
 				}
 			}
-		
-			state[index] = localState;
 		}
 
 
 		// Update state of Tsetlin Automata team
-		__global__ void update_weights(curandState *state, int tm_type, int number_of_outputs, int *clause_weights, float *clause_output, float *class_sum, int *y, int example)
+		__global__ void update_weights(ull seed, int tm_type, int number_of_outputs, int *clause_weights, float *clause_output, float *class_sum, int *y, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			/* Copy state to local memory for efficiency */  
-			curandState localState = state[index];
+			ull tid = (ull)(blockIdx.x * blockDim.x + threadIdx.x);
+			ull key = rng_hash(seed, tid, (ull)example, 0xBEEFCAFEULL);
+			uint counter = 0;
 
 			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
 				for (unsigned long long class_id = 0; class_id < number_of_outputs; ++class_id) {
@@ -929,24 +943,23 @@ code_update = """
 					}
 
 					#if LOG_SCALE == 1
-						update_clause_weight(&localState, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause] != NEG_INFINITY, y[example*number_of_outputs + class_id], local_class_sum);
+						update_clause_weight(key, &counter, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause] != NEG_INFINITY, y[example*number_of_outputs + class_id], local_class_sum);
 					#else
-						update_clause_weight(&localState, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause] > 0, y[example*number_of_outputs + class_id], local_class_sum);
+						update_clause_weight(key, &counter, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause] > 0, y[example*number_of_outputs + class_id], local_class_sum);
 					#endif
 				}
 			}
-		
-			state[index] = localState;
 		}
 
 		// Update state of Tsetlin Automata team
-		__global__ void update_weights_old(curandState *state, int tm_type, int number_of_outputs, int *clause_weights, float *clause_output, int *class_sum, int *y, int example)
+		__global__ void update_weights_old(ull seed, int tm_type, int number_of_outputs, int *clause_weights, float *clause_output, int *class_sum, int *y, int example)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			/* Copy state to local memory for efficiency */  
-			curandState localState = state[index];
+			ull tid = (ull)(blockIdx.x * blockDim.x + threadIdx.x);
+			ull key = rng_hash(seed, tid, (ull)example, 0xBEEFCAFEULL);
+			uint counter = 0;
 
 			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
 				for (unsigned long long class_id = 0; class_id < number_of_outputs; ++class_id) {
@@ -956,11 +969,9 @@ code_update = """
 					} else if (local_class_sum < -THRESHOLD) {
 						local_class_sum = -THRESHOLD;
 					}
-					update_clause_weight(&localState, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], (int) clause_output[clause], y[example*number_of_outputs + class_id], local_class_sum);
+					update_clause_weight(key, &counter, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], (int) clause_output[clause], y[example*number_of_outputs + class_id], local_class_sum);
 				}
 			}
-		
-			state[index] = localState;
 		}
     }
 """
@@ -968,18 +979,19 @@ code_update = """
 code_prepare = """
 	extern "C"
     {
-		__global__ void prepare_weights(curandState *state, int tm_type, int number_of_outputs, int *clause_weights, int *class_sum)
+		__global__ void prepare_weights(ull seed, int tm_type, int number_of_outputs, int *clause_weights, float *class_sum)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			curandState localState = state[index];
+			ull key = rng_hash(seed, (ull)blockIdx.x, (ull)threadIdx.x, 0ULL);
+			uint counter = 0;
 
 			for (unsigned long long clause = index; clause < CLAUSES; clause += stride) {
 				for (unsigned long long class_id = 0; class_id < number_of_outputs; ++class_id) {
 					#if NEGATIVE_CLAUSES == 1
 						if (tm_type == COALESCED_TM) {
-							clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (curand(&localState) % 2);
+							clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (rand_uint(key, &counter) % 2);
 						} else {
 							clause_weights[class_id*CLAUSES + clause] = 1 - 2 * (clause % 2);
 						}
@@ -989,15 +1001,12 @@ code_prepare = """
 				}
 			}
 				
-			state[index] = localState;
 		}
 
-		__global__ void prepare_hierarchy(curandState *state, int number_of_outputs, unsigned int *global_ta_state, int *clause_weights, int *class_sum)
+		__global__ void prepare_hierarchy(ull seed, int number_of_outputs, unsigned int *global_ta_state, int *clause_weights, float *class_sum)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
-
-			curandState localState = state[index];
 
 			// Evaluate each clause component (leaf) in separate threads
 			for (int clause_component = index; clause_component < CLAUSES*COMPONENTS; clause_component += stride) {
@@ -1010,15 +1019,11 @@ code_prepare = """
 					ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] = 0;
 				}
 			}
-
-			state[index] = localState;
 		}
 	}
 """
 
 code_encode = """
-	#include <curand_kernel.h>
-
 	extern "C"
     {
 		__global__ void prepare_encode_hierarchy(unsigned int *X, unsigned int *encoded_X, int number_of_literal_chunks, int number_of_examples)

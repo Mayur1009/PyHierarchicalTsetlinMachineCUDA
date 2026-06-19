@@ -19,19 +19,11 @@
 # SOFTWARE.
 
 from collections import deque
+from random import randint
+import cupy as cp
 import numpy as np
 
 import PyHierarchicalTsetlinMachineCUDA.kernels as kernels
-
-import cupy as cp
-import pycuda.curandom as curandom
-import pycuda.driver as cuda
-import pycuda.autoinit
-from pycuda.compiler import SourceModule
-from pycuda import gpuarray
-import sys
-
-from time import time
 
 OR_GROUP = " ∨* "
 OR_ALTERNATIVES = " ∨ "
@@ -48,7 +40,7 @@ class CommonTsetlinMachine():
 		# Params
 		self.number_of_clauses = number_of_clauses
 		self.number_of_state_bits = number_of_state_bits
-		self.T = int(T)
+		self.T = T
 		self.s = s
 		self.q = q
 		self.log_scale = log_scale
@@ -110,11 +102,7 @@ class CommonTsetlinMachine():
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
 				self.number_of_literal_chunks *= self.hierarchy_structure[d][1]
 
-		self.np_rng = np.random.default_rng(seed)
-		if seed is not None:
-			self.cuda_rng = curandom.XORWOWRandomNumberGenerator(seed_getter=lambda N: gpuarray.to_gpu(self.np_rng.integers(1, 2**30, size=N).astype(np.int32)))
-		else:
-			self.cuda_rng = curandom.XORWOWRandomNumberGenerator() 
+		self.seed = randint(1, 2**30) if seed is None else (seed if seed > 0 else seed + 1)
 
 		self.cuda_modules()
 
@@ -138,6 +126,10 @@ class CommonTsetlinMachine():
 
 #define NEGATIVE_CLAUSES {self.negative_clauses}
 #define FLIP_POLARITY {self.flip_polarity}
+
+#define VANILLA_TM {VANILLA_TM}
+#define WEIGHTED_TM {WEIGHTED_TM}
+#define COALESCED_TM {COALESCED_TM}
 		"""
 		
 		mod_prepare = cp.RawModule(code=parameters + kernels.code_header + kernels.code_prepare)
@@ -223,9 +215,8 @@ class CommonTsetlinMachine():
 
 	def initialize_weights_and_ta_states(self):
 		class_sum_gpu = cp.zeros(self.number_of_outputs, dtype=cp.float32)
-		rng_state = np.intp(int(self.cuda_rng.state))
 		self.prepare_weights(self.grid, self.block, (
-			rng_state,
+			np.uint64(self.seed),
 			np.int32(self.tm_type),
 			np.int32(self.number_of_outputs),
 			self.clause_weights_gpu,
@@ -233,7 +224,7 @@ class CommonTsetlinMachine():
 		))
 
 		self.prepare_hierarchy(self.grid, self.block, (
-			rng_state,
+			np.uint64(self.seed),
 			np.int32(self.number_of_outputs),
 			self.ta_state_hierarchy_gpu,
 			self.clause_weights_gpu,
@@ -340,7 +331,6 @@ class CommonTsetlinMachine():
 			for e in range(number_of_examples):
 				class_sum_gpu = self.evaluate_hierarchy(encoded_X_hierarchy_training_gpu, e)
 
-				rng_state = np.intp(int(self.cuda_rng.state))
 
 				# Propagates the root value and any intermittent node values back to the leaves.
 				# The purpose is to determine which leaves only has True nodes on the path from leaf to root.
@@ -354,16 +344,17 @@ class CommonTsetlinMachine():
 						))
 					else:
 						self.propagate_or_group_false_truth_values(self.grid, self.block, (
-							rng_state,
+							np.uint64(self.seed),
 							self.hierarchy_votes[d-1],
 							self.hierarchy_votes[d],
 							np.int32(self.hierarchy_size[d + 1]),
-							np.int32(self.hierarchy_structure[d][1])
+							np.int32(self.hierarchy_structure[d][1]),
+							np.int32(e)
 						))
 
 				# Updates the clause components (leaves) based on the propagated truth values
 				self.update_hierarchy(self.grid, self.block, (
-					rng_state,
+					np.uint64(self.seed),
 					np.int32(self.number_of_outputs),
 					self.ta_state_hierarchy_gpu,
 					self.clause_weights_gpu,
@@ -380,7 +371,7 @@ class CommonTsetlinMachine():
 				# Updates the clause weights
 				if (self.tm_type in [WEIGHTED_TM, COALESCED_TM]):
 					self.update_weights(self.grid, self.block, (
-						rng_state,
+						np.uint64(self.seed),
 						np.int32(self.tm_type),
 						np.int32(self.number_of_outputs),
 						self.clause_weights_gpu,
