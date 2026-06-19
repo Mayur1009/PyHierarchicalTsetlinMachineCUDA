@@ -146,9 +146,13 @@ class CommonTsetlinMachine:
 #define VANILLA_TM {VANILLA_TM}
 #define WEIGHTED_TM {WEIGHTED_TM}
 #define COALESCED_TM {COALESCED_TM}
+
+#define MAX_THREADS {self.grid[0] * self.block[0]}
 		"""
 
-		mod_update = cp.RawModule(code=parameters + kernels.code_header + kernels.code_update)
+		mod_update = cp.RawModule(code=parameters + kernels.code_header + kernels.code_update, backend="nvcc")
+		self.init_rng_states = mod_update.get_function("init_rng_states")
+		self.init_rng_states(self.grid, self.block, (np.uint64(self.seed),))
 		self.update_hierarchy = mod_update.get_function("update_hierarchy")
 		self.update_weights = mod_update.get_function("update_weights")
 		self.evaluate_leaves = mod_update.get_function("evaluate_leaves")
@@ -349,7 +353,6 @@ class CommonTsetlinMachine:
 		encoded_X_hierarchy_training_gpu = self.encode_X(X)
 
 		for epoch in range(epochs):
-			rng_state = np.uint64(int(self.seed) + epoch)
 			for e in range(number_of_examples):
 				class_sum_gpu = self.evaluate_hierarchy(encoded_X_hierarchy_training_gpu, e)
 
@@ -371,7 +374,6 @@ class CommonTsetlinMachine:
 						self.propagate_or_group_false_truth_values(
 							*kc,
 							(
-								rng_state,
 								self.hierarchy_votes[d - 1],
 								self.hierarchy_votes[d],
 								np.int32(self.hierarchy_size[d + 1]),
@@ -384,7 +386,6 @@ class CommonTsetlinMachine:
 				self.update_hierarchy(
 					*self.ker_conf_clauses,
 					(
-						rng_state,
 						np.int32(self.number_of_outputs),
 						self.ta_state_hierarchy_gpu,
 						self.clause_weights_gpu,
@@ -404,7 +405,6 @@ class CommonTsetlinMachine:
 					self.update_weights(
 						*self.ker_conf_clauses,
 						(
-							rng_state,
 							np.int32(self.tm_type),
 							np.int32(self.number_of_outputs),
 							self.clause_weights_gpu,
@@ -742,7 +742,7 @@ class MultiClassTsetlinMachine:
 		q=1.0,
 		log_scale=False,
 		weighted_clauses=False,
-		hierarchy_structure=((AND_GROUP, 1)),
+		hierarchy_structure=((AND_GROUP, 1),),
 		boost_true_positive_feedback=1,
 		number_of_state_bits=8,
 		append_negated=True,
