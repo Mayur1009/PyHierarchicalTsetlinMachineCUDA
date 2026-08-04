@@ -33,14 +33,14 @@ import sys
 
 from time import time
 
-OR_GROUP = " ∨* "
-OR_ALTERNATIVES = " ∨ "
+OR_GROUP = " ∨ "
+OR_ALTERNATIVES = " ∨* "
 AND_GROUP = " ∧ "
+AND_ALTERNATIVES = " ∧* "
 
 VANILLA_TM = 0
 WEIGHTED_TM = 1
 COALESCED_TM = 2
-
 
 class CommonTsetlinMachine():
 
