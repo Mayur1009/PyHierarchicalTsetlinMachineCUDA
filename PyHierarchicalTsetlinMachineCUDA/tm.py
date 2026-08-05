@@ -578,7 +578,7 @@ class CommonTsetlinMachine():
 					elif previous_index[d-1] != depth_d_node_index:
 						if self.hierarchy_structure[d][0] in [AND_GROUP, AND_ALTERNATIVES]:
 							inside.append(" ∧ ")
-						elif elf.hierarchy_structure[d][0] in [OR_GROUP, OR_ALTERNATIVES]:
+						elif self.hierarchy_structure[d][0] in [OR_GROUP, OR_ALTERNATIVES]:
 							inside.append(" ∨ ")
 					
 					previous_index[d-1] = depth_d_node_index
