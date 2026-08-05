@@ -92,7 +92,7 @@ class CommonTsetlinMachine():
 		# Calculates the number of literal chunks for the full hierarchy
 		self.hierarchy_size[0] = self.number_of_literal_chunks_per_leaf * self.hierarchy_size[1]
 
-		# Calculates number of literal chunks overall for the feature vector (ignores OR alternatives)
+		# Calculates number of literal chunks overall for the feature vector (ignores OR- and AND alternatives)
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf
 		for d in range(self.depth - 1, 0, -1):
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
@@ -265,9 +265,9 @@ class CommonTsetlinMachine():
 		None # To be updated
 
 	def initialize_weights_and_ta_states(self):
-		self.prepare_weights(self.cuda_rng.state, np.int32(self.tm_type), np.int32(self.number_of_outputs), self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+		self.prepare_weights(self.cuda_rng.state, np.int32(self.tm_type), np.int32(self.number_of_outputs), self.clause_weights_gpu, grid=self.grid, block=self.block)
 
-		self.prepare_hierarchy(self.cuda_rng.state, np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, self.clause_weights_gpu, self.class_sum_gpu, grid=self.grid, block=self.block)
+		self.prepare_hierarchy(np.int32(self.number_of_outputs), self.ta_state_hierarchy_gpu, grid=self.grid, block=self.block)
 
 	def evaluate_hierarchy(self, encoded_X_hierarchy, e):
 		# Initializes class sums to zero

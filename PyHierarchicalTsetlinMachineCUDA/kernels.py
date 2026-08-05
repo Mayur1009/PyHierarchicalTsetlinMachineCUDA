@@ -606,7 +606,7 @@ code_update = """
 code_prepare = """
 	extern "C"
     {
-		__global__ void prepare_weights(curandState *state, int tm_type, int number_of_outputs, int *clause_weights, int *class_sum)
+		__global__ void prepare_weights(curandState *state, int tm_type, int number_of_outputs, int *clause_weights)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
@@ -630,12 +630,10 @@ code_prepare = """
 			state[index] = localState;
 		}
 
-		__global__ void prepare_hierarchy(curandState *state, int number_of_outputs, unsigned int *global_ta_state, int *clause_weights, int *class_sum)
+		__global__ void prepare_hierarchy(int number_of_outputs, unsigned int *global_ta_state)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
-
-			curandState localState = state[index];
 
 			// Evaluate each clause component (leaf) in separate threads
 			for (int clause_component = index; clause_component < CLAUSES*COMPONENTS; clause_component += stride) {
@@ -648,8 +646,6 @@ code_prepare = """
 					ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] = 0;
 				}
 			}
-
-			state[index] = localState;
 		}
 	}
 """
