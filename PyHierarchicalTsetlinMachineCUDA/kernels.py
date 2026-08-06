@@ -637,10 +637,9 @@ code_prepare = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			// Evaluate each clause component (leaf) in separate threads
-			for (int clause_component = index; clause_component < CLAUSES*COMPONENTS; clause_component += stride) {
-				// Get state of current clause component
-				unsigned int *ta_state = &global_ta_state[clause_component*TA_CHUNKS_PER_LEAF*STATE_BITS];
+			for (int clause_team = index; clause_team < CLAUSES*TA_TEAMS; clause_team += stride) {
+				// Get state of current ta team
+				unsigned int *ta_state = &global_ta_state[clause_team*TA_CHUNKS_PER_LEAF*STATE_BITS];
 				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
 					for (int b = 0; b < STATE_BITS-1; ++b) {
 						ta_state[ta_chunk*STATE_BITS + b] = ~0;
