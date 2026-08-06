@@ -195,7 +195,7 @@ code_update = """
 				}
 
 				// Get state of current ta team component
-				unsigned int *ta_state = &global_ta_state[clause*COMPONENTS*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_base*STATE_BITS];
+				unsigned int *ta_state = &global_ta_state[clause*TA_TEAMS*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_base*STATE_BITS];
 
 				// Evaluate clause component
 
@@ -553,7 +553,7 @@ code_update = """
 				}
 
 				// Get state of current ta team component
-				unsigned int *ta_state = &global_ta_state[clause*COMPONENTS*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_base*STATE_BITS];
+				unsigned int *ta_state = &global_ta_state[clause*TA_TEAMS*TA_CHUNKS_PER_LEAF*STATE_BITS + ta_chunk_base*STATE_BITS];
 
 				for (unsigned long long class_id = 0; class_id < number_of_outputs; ++class_id) {
 					float local_class_sum = class_sum[class_id];
@@ -715,9 +715,9 @@ code_clauses = """
 		int index = blockIdx.x * blockDim.x + threadIdx.x;
 		int stride = blockDim.x * gridDim.x;
 
-		for (unsigned long long i = index; i < 1LLU * CLAUSES * COMPONENTS * LITERALS_PER_LEAF; i += stride) {
-			unsigned long long clause = i / (COMPONENTS * LITERALS_PER_LEAF);
-			unsigned long long comp   = (i / LITERALS_PER_LEAF) % COMPONENTS;
+		for (unsigned long long i = index; i < 1LLU * CLAUSES * TA_TEAMS * LITERALS_PER_LEAF; i += stride) {
+			unsigned long long clause = i / (TA_TEAMS * LITERALS_PER_LEAF);
+			unsigned long long comp   = (i / LITERALS_PER_LEAF) % TA_TEAMS;
 			unsigned long long ta_idx = i % LITERALS_PER_LEAF;
 
 			int chunk   = ta_idx / 32;
@@ -726,14 +726,14 @@ code_clauses = """
 			unsigned int state = 0;
 			for (int b = 0; b < STATE_BITS; ++b) {
 				unsigned int plane = global_ta_state[
-					(clause * COMPONENTS * TA_CHUNKS_PER_LEAF * STATE_BITS) +
+					(clause * TA_TEAMS * TA_CHUNKS_PER_LEAF * STATE_BITS) +
 					(comp   * TA_CHUNKS_PER_LEAF * STATE_BITS) +
 					(chunk  * STATE_BITS) + b
 				];
 				if (plane & (1U << bit_pos)) state |= (1U << b);
 			}
 
-			unpacked_states[(clause * COMPONENTS * LITERALS_PER_LEAF) + (comp * LITERALS_PER_LEAF) + ta_idx] = state;
+			unpacked_states[(clause * TA_TEAMS * LITERALS_PER_LEAF) + (comp * LITERALS_PER_LEAF) + ta_idx] = state;
 		}
 	}
 """
