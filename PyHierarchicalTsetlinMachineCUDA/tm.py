@@ -92,10 +92,10 @@ class CommonTsetlinMachine():
 		# Calculates the number of literal chunks for the full hierarchy
 		self.hierarchy_size[0] = self.number_of_literal_chunks_per_leaf * self.hierarchy_size[1]
 
-		self.number_of_ta_chunks = self.number_of_literal_chunks_per_leaf
+		self.number_of_ta_teams = 1
 		for d in range(self.depth - 1):
-			if self.hierarchy_structure[d][0] != OR_GROUP:
-				self.number_of_ta_chunks = self.hierarchy_structure[self.depth - d - 1][1] * self.number_of_ta_chunks
+			if self.hierarchy_structure[d][0] != OR_GROUP: # OR_GROUP reuses the same TA
+				self.number_of_ta_teams = self.hierarchy_structure[self.depth - d - 1][1] * self.number_of_ta_teams
 
 		# Calculates number of literal chunks overall for the feature vector (ignores OR- and AND alternatives)
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf
@@ -118,6 +118,7 @@ class CommonTsetlinMachine():
 	#define CLAUSES %d
 	#define DEPTH %d
 	#define COMPONENTS %d
+	#define TA_TEAMS %d
 	#define LITERALS_PER_LEAF %d
 	#define TA_CHUNKS_PER_LEAF %d
 	#define LITERAL_CHUNKS %d
@@ -135,7 +136,7 @@ class CommonTsetlinMachine():
 
 	#define NEGATIVE_CLAUSES %d
 	#define FLIP_POLARITY %d
-		""" % (self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.log_scale, AND_GROUP, AND_ALTERNATIVES, OR_GROUP, OR_ALTERNATIVES, self.negative_clauses, self.flip_polarity)
+		""" % (self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_ta_teams, self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.log_scale, AND_GROUP, AND_ALTERNATIVES, OR_GROUP, OR_ALTERNATIVES, self.negative_clauses, self.flip_polarity)
 		
 		mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
 		self.prepare_weights = mod_prepare.get_function("prepare_weights")
@@ -214,7 +215,7 @@ class CommonTsetlinMachine():
 		cuda.memcpy_htod(self.hierarchy_structure_type_gpu, np.array(self.hierarchy_structure_type, dtype=np.int32))
 
 		# GPU memory for storing Tsetlin Automata states
-		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.number_of_ta_chunks*self.number_of_state_bits*4)
+		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.number_of_ta_teams*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits*4)
 		self.clause_weights_gpu = cuda.mem_alloc(self.number_of_outputs*self.number_of_clauses*4)
 		self.component_weights_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[1]*4) # Only positive weights...
 		self.class_sum_gpu = cuda.mem_alloc(self.number_of_outputs*4)
@@ -223,16 +224,16 @@ class CommonTsetlinMachine():
 		self.clause_output_max = np.ascontiguousarray(np.empty(1)).astype(np.float32)
 
 	def ta_action(self, clause, leaf, ta):
-		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[1]*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
+		ta_state_hierarchy = np.empty(self.number_of_clauses*self.number_of_ta_teams*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
 		cuda.memcpy_dtoh(ta_state_hierarchy, self.ta_state_hierarchy_gpu)
-		ta_state_hierarchy = ta_state_hierarchy.reshape((self.number_of_clauses, self.hierarchy_size[1], self.number_of_literal_chunks_per_leaf, self.number_of_state_bits))
+		ta_state_hierarchy = ta_state_hierarchy.reshape((self.number_of_clauses, self.number_of_ta_teams, self.number_of_literal_chunks_per_leaf, self.number_of_state_bits))
 
 		return (ta_state_hierarchy[clause, leaf, ta // 32, self.number_of_state_bits-1] & (1 << (ta % 32))) > 0
 
 	def ta_state(self, clause, leaf, ta):
-		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[1]*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
+		ta_state_hierarchy = np.empty(self.number_of_clauses*self.number_of_ta_teams*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
 		cuda.memcpy_dtoh(ta_state_hierarchy, self.ta_state_hierarchy_gpu)
-		ta_state_hierarchy = ta_state_hierarchy.reshape((self.number_of_clauses, self.hierarchy_size[1], self.number_of_literal_chunks_per_leaf, self.number_of_state_bits))
+		ta_state_hierarchy = ta_state_hierarchy.reshape((self.number_of_clauses, self.number_of_ta_teams, self.number_of_literal_chunks_per_leaf, self.number_of_state_bits))
 		
 		state = 0
 		for b in range(self.number_of_state_bits):
@@ -243,7 +244,7 @@ class CommonTsetlinMachine():
 
 	def get_state(self):
 		# To be updated
-		ta_state_hierarchy = np.empty(self.number_of_clauses*self.hierarchy_size[1]*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
+		ta_state_hierarchy = np.empty(self.number_of_clauses*self.number_of_ta_teams*self.number_of_literal_chunks_per_leaf*self.number_of_state_bits, dtype=np.uint32)
 		cuda.memcpy_dtoh(self.ta_state_hierarchy, self.ta_state_hierarchy_gpu)
 		clause_weights = np.empty(self.number_of_outputs*self.number_of_clauses).astype(np.int32)
 		cuda.memcpy_dtoh(self.clause_weights, self.clause_weights_gpu)
@@ -260,7 +261,7 @@ class CommonTsetlinMachine():
 		self.min_y = state[8]
 		self.max_y = state[9]
 		
-		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
+		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.number_of_ta_teams*self.number_of_state_bits*4)
 		self.clause_weights_gpu = cuda.mem_alloc(self.number_of_outputs*self.number_of_clauses*4)
 		cuda.memcpy_htod(self.ta_state_hierarchy_gpu, state[0])
 		cuda.memcpy_htod(self.clause_weights_gpu, state[1])
