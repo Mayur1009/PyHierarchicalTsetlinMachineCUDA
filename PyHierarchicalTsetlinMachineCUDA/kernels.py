@@ -178,14 +178,16 @@ code_update = """
 				int size_feature_chunk_base = 1;
 				int size_ta_chunk_base = 1;
 				for (int d = 0; d < depth-1; ++d) {
-					int depth_d_node_index = component_remainder % hierarchy_structure_factors[d];
-					component_remainder = component_remainder / hierarchy_structure_factors[d];
+					int depth_d_node_index = component_remainder % hierarchy_structure_factors[d]; // Extract local index of node at depth d (the child index)
+					component_remainder = component_remainder / hierarchy_structure_factors[d]; // Move up the hierarchy to prepare for finding the local node index at depth d+1
 
-					if (hierarchy_structure_type[d] != OR_ALTERNATIVES) {
-						feature_chunk_base += size_feature_chunk_base * depth_d_node_index * TA_CHUNKS_PER_LEAF;
-						size_feature_chunk_base *= hierarchy_structure_factors[d];
+					// Support multiple Tsetlin Automata teams operating on the same feature chunks to create alternatives.
+					if (hierarchy_structure_type[d] != OR_ALTERNATIVES && hierarchy_structure_type[d] != AND_ALTERNATIVES) {
+						feature_chunk_base += size_feature_chunk_base * depth_d_node_index * TA_CHUNKS_PER_LEAF; // Identify correct part of the sub-hierarchy (through flattening)
+						size_feature_chunk_base *= hierarchy_structure_factors[d]; // Identify how many nodes to jump to skip from one child to the next when indexing at the next depth level
 					}
 
+					// Support reuse of the same Tsetlin Automata when doing OR to group different feature chunks
 					if (hierarchy_structure_type[d] != OR_GROUP) {
 						ta_chunk_base += size_ta_chunk_base * depth_d_node_index * TA_CHUNKS_PER_LEAF;
 						size_ta_chunk_base *= hierarchy_structure_factors[d];
@@ -360,7 +362,7 @@ code_update = """
 						}
 					} else {
 						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							if (child_input[group_node*number_of_group_node_children + or_addend] > 0) {
+							if (child_input[group_node*number_of_group_node_children + or_addend] > 0) { // Or pick the largest.... picking randomly when a tie
 								non_zero_children[number_of_non_zero_children] = or_addend;
 								number_of_non_zero_children++;
 							}

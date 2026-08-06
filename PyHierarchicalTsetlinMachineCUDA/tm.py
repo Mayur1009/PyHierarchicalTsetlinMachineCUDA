@@ -92,6 +92,11 @@ class CommonTsetlinMachine():
 		# Calculates the number of literal chunks for the full hierarchy
 		self.hierarchy_size[0] = self.number_of_literal_chunks_per_leaf * self.hierarchy_size[1]
 
+		self.number_of_ta_chunks = self.number_of_literal_chunks_per_leaf
+		for d in range(self.depth - 1):
+			if self.hierarchy_structure[d][0] != OR_GROUP:
+				self.number_of_ta_chunks = self.hierarchy_structure[self.depth - d - 1][1] * self.number_of_ta_chunks
+
 		# Calculates number of literal chunks overall for the feature vector (ignores OR- and AND alternatives)
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf
 		for d in range(self.depth - 1, 0, -1):
@@ -209,7 +214,7 @@ class CommonTsetlinMachine():
 		cuda.memcpy_htod(self.hierarchy_structure_type_gpu, np.array(self.hierarchy_structure_type, dtype=np.int32))
 
 		# GPU memory for storing Tsetlin Automata states
-		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[0]*self.number_of_state_bits*4)
+		self.ta_state_hierarchy_gpu = cuda.mem_alloc(self.number_of_clauses*self.number_of_ta_chunks*self.number_of_state_bits*4)
 		self.clause_weights_gpu = cuda.mem_alloc(self.number_of_outputs*self.number_of_clauses*4)
 		self.component_weights_gpu = cuda.mem_alloc(self.number_of_clauses*self.hierarchy_size[1]*4) # Only positive weights...
 		self.class_sum_gpu = cuda.mem_alloc(self.number_of_outputs*4)
