@@ -4,7 +4,7 @@ import numpy as np
 noise = 0.2
 number_of_features = 12
 number_of_variables = 4
-number_of_examples = 20000
+number_of_examples = 200000
 
 X_train = np.random.randint(2, size=(number_of_examples, number_of_features), dtype=np.uint32)
 Y_train = np.zeros(number_of_examples, dtype=np.uint32)
