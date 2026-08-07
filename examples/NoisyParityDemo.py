@@ -18,7 +18,7 @@ Y_test = test_data[:,-1]
 tm = TsetlinMachine(clauses, T, s, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, 3), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 3), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 1000 epochs:\n")
-for e in range(10000):
+for e in range(1000):
 	start_training = time()
 	tm.fit(X_train, Y_train)
 	stop_training = time()
