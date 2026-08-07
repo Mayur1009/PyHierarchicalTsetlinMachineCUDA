@@ -1,4 +1,4 @@
-from PyHierarchicalTsetlinMachineCUDA.tm import TsetlinMachine
+from PyHierarchicalTsetlinMachineCUDA.tm import MultiClassTsetlinMachine
 import numpy as np
 from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
@@ -6,14 +6,14 @@ import argparse
 
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--epochs", default=250, type=int)
-	parser.add_argument("--number-of-clauses", default=32, type=int)
-	parser.add_argument("--number-of-examples", default=5000, type=int)
-	parser.add_argument("--T", default=64, type=int)
-	parser.add_argument("--s", default=2.1, type=float)
-	parser.add_argument("--number-of-copies", default=1, type=int)
-	parser.add_argument("--number-of-alternatives", default=1, type=int)
-	parser.add_argument("--number-of-elements", default=2, type=int)
+	parser.add_argument("--epochs", default=100, type=int)
+	parser.add_argument("--number-of-clauses", default=4, type=int)
+	parser.add_argument("--number-of-examples", default=10000, type=int)
+	parser.add_argument("--T", default=256, type=int)
+	parser.add_argument("--s", default=18.1, type=float)
+	parser.add_argument("--number-of-alternatives", default=64, type=int)
+	parser.add_argument("--number-of-elements", default=16, type=int)
+	parser.add_argument("--number-of-copies", default=2, type=int)
 	parser.add_argument("--noise", default=0.0, type=float)
 	args = parser.parse_args()
 	for key, value in kwargs.items():
@@ -25,36 +25,46 @@ args = default_args()
 
 features = args.number_of_elements*2
 
-X_train = np.zeros((args.number_of_examples, features*args.number_of_copies), dtype=np.uint32)
+X_train = np.zeros((args.number_of_examples, features), dtype=np.uint32)
 Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
 	x = np.random.randint(args.number_of_elements, size=(2))
 
-	for j in range(args.number_of_copies):
-		X_train[i, j*features + x[0]] = 1
-		X_train[i, j*features + args.number_of_elements + x[1]] = 1
+	X_train[i, x[0]] = 1
+	X_train[i, args.number_of_elements + x[1]] = 1
 
 	Y_train[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
 Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
 
-X_test = np.zeros((args.number_of_examples, features*args.number_of_copies), dtype=np.uint32)
+X_test = np.zeros((args.number_of_examples, features), dtype=np.uint32)
 Y_test = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
 	x = np.random.randint(args.number_of_elements, size=(2))
 
-	for j in range(args.number_of_copies):
-		X_test[i, j*features + x[0]] = 1
-		X_test[i, j*features + args.number_of_elements + x[1]] = 1
+	X_test[i, x[0]] = 1
+	X_test[i, args.number_of_elements + x[1]] = 1
 
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
-tm = TsetlinMachine(args.number_of_clauses, args.T, args.s, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, features), (tm.OR_ALTERNATIVES, args.number_of_alternatives), (tm.AND_GROUP, args.number_of_copies)))
+tm = MultiClassTsetlinMachine(
+	args.number_of_clauses,
+	args.T,
+	args.s,
+	number_of_state_bits=8,
+	boost_true_positive_feedback=0,
+	hierarchy_structure=(
+		(tm.AND_GROUP, features),
+		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+		(tm.AND_ALTERNATIVES, args.number_of_copies)
+	),
+	append_negated=False
+)
 
-print("\nAccuracy over 1000 epochs:\n")
+print("\nAccuracy over %d epochs:\n" % (args.epochs))
 for e in range(args.epochs):
 	start_training = time()
-	tm.fit(X_train, Y_train, incremental=True)
+	tm.fit(X_train, Y_train, incremental=True, epochs=1)
 	stop_training = time()
 
 	start_testing = time()
