@@ -6,14 +6,13 @@ import argparse
 
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--epochs", default=250, type=int)
-	parser.add_argument("--number-of-clauses", default=32, type=int)
-	parser.add_argument("--number-of-examples", default=5000, type=int)
-	parser.add_argument("--T", default=64, type=int)
-	parser.add_argument("--s", default=2.1, type=float)
-	parser.add_argument("--number-of-copies", default=1, type=int)
-	parser.add_argument("--number-of-alternatives", default=1, type=int)
-	parser.add_argument("--number-of-elements", default=2, type=int)
+	parser.add_argument("--epochs", default=500, type=int)
+	parser.add_argument("--number-of-clauses", default=4, type=int)
+	parser.add_argument("--number-of-examples", default=10000, type=int)
+	parser.add_argument("--T", default=256, type=int)
+	parser.add_argument("--s", default=18.1, type=float)
+	parser.add_argument("--number-of-alternatives", default=64, type=int)
+	parser.add_argument("--number-of-elements", default=16, type=int)
 	parser.add_argument("--noise", default=0.0, type=float)
 	args = parser.parse_args()
 	for key, value in kwargs.items():
@@ -30,9 +29,8 @@ Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
 	x = np.random.randint(args.number_of_elements, size=(2))
 
-	for j in range(args.number_of_copies):
-		X_train[i, j*features + x[0]] = 1
-		X_train[i, j*features + args.number_of_elements + x[1]] = 1
+	X_train[i, x[0]] = 1
+	X_train[i, args.number_of_elements + x[1]] = 1
 
 	Y_train[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
