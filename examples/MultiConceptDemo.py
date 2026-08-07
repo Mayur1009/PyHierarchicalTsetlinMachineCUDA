@@ -47,7 +47,7 @@ for i in range(args.number_of_examples):
 
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
-tm = TsetlinMachine(
+tm = MultiClassTsetlinMachine(
 	args.number_of_clauses,
 	args.T,
 	args.s,
