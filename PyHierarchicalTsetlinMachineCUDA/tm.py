@@ -574,7 +574,7 @@ class CommonTsetlinMachine():
 					depth_d_node_index = component_remainder % self.hierarchy_structure[d][1]
 					component_remainder = component_remainder // self.hierarchy_structure[d][1]
 
-					if self.hierarchy_structure[d][0] != OR_ALTERNATIVES:
+					if (self.hierarchy_structure[d][0] != OR_ALTERNATIVES) and (self.hierarchy_structure[d][0] != AND_ALTERNATIVES):
 						feature_base += size * depth_d_node_index 
 						size *= self.hierarchy_structure[d][1];
 
@@ -794,6 +794,11 @@ class MultiClassTsetlinMachine:
 				'block': self.block,
 			},
 		}
+
+	def print_hierarchy(self, print_ta_state=False):
+		for i in range(self.number_of_outputs):
+			print("CLASS %d\n", i)
+			self.tms[i].print_hierarchy(print_ta_state = print_ta_state)
 
 	def load(self, state_dict: dict):
 		self.number_of_outputs = state_dict['number_of_outputs']
