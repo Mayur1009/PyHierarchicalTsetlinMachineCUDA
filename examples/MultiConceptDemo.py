@@ -6,7 +6,7 @@ import argparse
 
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--epochs", default=100, type=int)
+	parser.add_argument("--epochs", default=1000, type=int)
 	parser.add_argument("--number-of-clauses", default=4, type=int)
 	parser.add_argument("--number-of-examples", default=10000, type=int)
 	parser.add_argument("--T", default=256, type=int)
@@ -65,7 +65,7 @@ print("\nAccuracy over %d epochs:\n" % (args.epochs))
 for e in range(args.epochs):
 	print("Ensemble %d\n" % (e + 1))
 	start_training = time()
-	tm.fit(X_train, Y_train, incremental=True)
+	tm.fit(X_train, Y_train)
 	stop_training = time()
 
 	start_testing = time()
