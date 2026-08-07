@@ -182,7 +182,7 @@ code_update = """
 					component_remainder = component_remainder / hierarchy_structure_factors[d]; // Move up the hierarchy to prepare for finding the local node index at depth d+1
 
 					// Support multiple Tsetlin Automata teams operating on the same feature chunks to create alternatives.
-					if (hierarchy_structure_type[d] != OR_ALTERNATIVES && hierarchy_structure_type[d] != AND_ALTERNATIVES) {
+					if ((hierarchy_structure_type[d] != OR_ALTERNATIVES) && (hierarchy_structure_type[d] != AND_ALTERNATIVES)) {
 						feature_chunk_base += size_feature_chunk_base * depth_d_node_index * TA_CHUNKS_PER_LEAF; // Identify correct part of the sub-hierarchy (through flattening)
 						size_feature_chunk_base *= hierarchy_structure_factors[d]; // Identify how many nodes to jump to skip from one child to the next when indexing at the next depth level
 					}
@@ -541,7 +541,7 @@ code_update = """
 					int depth_d_node_index = component_remainder % hierarchy_structure_factors[d];
 					component_remainder = component_remainder / hierarchy_structure_factors[d];
 
-					if (hierarchy_structure_type[d] != OR_ALTERNATIVES) {
+					if ((hierarchy_structure_type[d] != OR_ALTERNATIVES) && (hierarchy_structure_type[d] != AND_ALTERNATIVES)) {
 						feature_chunk_base += size_feature_chunk_base * depth_d_node_index * TA_CHUNKS_PER_LEAF;
 						size_feature_chunk_base *= hierarchy_structure_factors[d];
 					}
