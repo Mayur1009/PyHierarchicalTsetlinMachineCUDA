@@ -24,7 +24,7 @@ args = default_args()
 
 features = args.number_of_elements*2
 
-X_train = np.zeros((args.number_of_examples, features*args.number_of_copies), dtype=np.uint32)
+X_train = np.zeros((args.number_of_examples, features), dtype=np.uint32)
 Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
 	x = np.random.randint(args.number_of_elements, size=(2))
@@ -36,14 +36,13 @@ for i in range(args.number_of_examples):
 
 Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
 
-X_test = np.zeros((args.number_of_examples, features*args.number_of_copies), dtype=np.uint32)
+X_test = np.zeros((args.number_of_examples, features), dtype=np.uint32)
 Y_test = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
 	x = np.random.randint(args.number_of_elements, size=(2))
 
-	for j in range(args.number_of_copies):
-		X_test[i, j*features + x[0]] = 1
-		X_test[i, j*features + args.number_of_elements + x[1]] = 1
+	X_test[i, x[0]] = 1
+	X_test[i, args.number_of_elements + x[1]] = 1
 
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
