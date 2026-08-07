@@ -164,7 +164,7 @@ tm = MultiClassCoalescedTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.A
 print("\nAccuracy over 500 epochs:\n")
 for i in range(500):
 	start_training = time()
-	tm.fit(X_train, Y_train, epochs=1, incremental=True)
+	tm.fit(X_train, Y_train)
 	stop_training = time()
 
 	start_testing = time()
