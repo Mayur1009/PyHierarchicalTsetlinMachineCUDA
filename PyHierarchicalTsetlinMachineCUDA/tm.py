@@ -78,8 +78,6 @@ class CommonTsetlinMachine():
 			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
 				self.number_of_features_hierarchy *= self.hierarchy_structure[d][1]
 
-		print("Number of features:", self.number_of_features_hierarchy)
-
 		# Calculates literal chunks per leaf
 		self.number_of_features_per_leaf = self.hierarchy_structure[0][1]
 		if self.append_negated:
@@ -98,8 +96,6 @@ class CommonTsetlinMachine():
 		for d in range(self.depth - 1):
 			if self.hierarchy_structure[d][0] != OR_GROUP: # OR_GROUP reuses the same TA
 				self.number_of_ta_teams = self.hierarchy_structure[self.depth - d - 1][1] * self.number_of_ta_teams
-
-		print("Number of TA teams", self.number_of_ta_teams)
 
 		# Calculates number of literal chunks overall for the feature vector (ignores OR- and AND alternatives)
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf

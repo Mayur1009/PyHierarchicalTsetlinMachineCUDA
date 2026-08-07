@@ -53,7 +53,11 @@ tm = MultiClassTsetlinMachine(
 	args.s,
 	number_of_state_bits=8,
 	boost_true_positive_feedback=0,
-	hierarchy_structure=((tm.AND_GROUP, features), (tm.OR_ALTERNATIVES, args.number_of_alternatives), (tm.AND_ALTERNATIVES, args.number_of_copies)),
+	hierarchy_structure=(
+		(tm.AND_GROUP, features),
+		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+		(tm.AND_ALTERNATIVES, args.number_of_copies)
+	),
 	append_negated=False
 )
 
