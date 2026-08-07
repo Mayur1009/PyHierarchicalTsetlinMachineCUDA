@@ -13,6 +13,7 @@ def default_args(**kwargs):
 	parser.add_argument("--s", default=18.1, type=float)
 	parser.add_argument("--number-of-alternatives", default=64, type=int)
 	parser.add_argument("--number-of-elements", default=16, type=int)
+	parser.add_argument("--number-of-copies", default=2, type=int)
 	parser.add_argument("--noise", default=0.0, type=float)
 	args = parser.parse_args()
 	for key, value in kwargs.items():
@@ -52,7 +53,7 @@ tm = TsetlinMachine(
 	args.s,
 	number_of_state_bits=8,
 	boost_true_positive_feedback=0,
-	hierarchy_structure=((tm.AND_GROUP, features), (tm.OR_ALTERNATIVES, args.number_of_alternatives), (tm.AND_GROUP, args.number_of_copies)),
+	hierarchy_structure=((tm.AND_GROUP, features), (tm.OR_ALTERNATIVES, args.number_of_alternatives), (tm.AND_ALTERNATIVES, args.number_of_copies)),
 	append_negated=False
 )
 
