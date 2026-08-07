@@ -6,7 +6,7 @@ import argparse
 
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--epochs", default=500, type=int)
+	parser.add_argument("--epochs", default=100, type=int)
 	parser.add_argument("--number-of-clauses", default=4, type=int)
 	parser.add_argument("--number-of-examples", default=10000, type=int)
 	parser.add_argument("--T", default=256, type=int)
@@ -61,10 +61,10 @@ tm = MultiClassTsetlinMachine(
 	append_negated=False
 )
 
-print("\nAccuracy over 1000 epochs:\n")
+print("\nAccuracy over %d epochs:\n" % (args.epochs))
 for e in range(args.epochs):
 	start_training = time()
-	tm.fit(X_train, Y_train, incremental=True)
+	tm.fit(X_train, Y_train, incremental=True, epochs=1)
 	stop_training = time()
 
 	start_testing = time()
