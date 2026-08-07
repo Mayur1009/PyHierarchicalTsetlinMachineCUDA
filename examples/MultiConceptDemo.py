@@ -62,9 +62,10 @@ tm = MultiClassTsetlinMachine(
 )
 
 print("\nAccuracy over %d epochs:\n" % (args.epochs))
-for e in range(args.epochs):
+for e in range(10):
+	print("Ensemble %d\n" % (e))
 	start_training = time()
-	tm.fit(X_train, Y_train, incremental=True, epochs=1)
+	tm.fit(X_train, Y_train, incremental=True, epochs=args.epochs)
 	stop_training = time()
 
 	start_testing = time()
