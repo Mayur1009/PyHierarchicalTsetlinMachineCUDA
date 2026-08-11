@@ -97,10 +97,16 @@ class CommonTsetlinMachine():
 			if self.hierarchy_structure[d][0] != OR_GROUP: # OR_GROUP reuses the same TA
 				self.number_of_ta_teams = self.hierarchy_structure[self.depth - d - 1][1] * self.number_of_ta_teams
 
+		# Identifies the larget number of OR_GROUP children (for allocating local memory)
+		self.max_number_of_or_group_children = 0
+		for d in range(1, self.depth):
+			if self.hierarchy_structure[d][0] == OR_GROUP and self.max_number_of_or_group_children < self.hierarchy_structure[d][1]:
+				self.max_number_of_or_group_children = self.hierarchy_structure[d][1]
+
 		# Calculates number of literal chunks overall for the feature vector (ignores OR- and AND alternatives)
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf
 		for d in range(self.depth - 1, 0, -1):
-			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP):
+			if (self.hierarchy_structure[d][0] == OR_GROUP or self.hierarchy_structure[d][0] == AND_GROUP): # OR_GROUP and AND_GROUP join the features of their children
 				self.number_of_literal_chunks *= self.hierarchy_structure[d][1]
 
 		self.np_rng = np.random.default_rng(seed)
@@ -134,9 +140,11 @@ class CommonTsetlinMachine():
 	#define OR_GROUP %d
 	#define OR_ALTERNATIVES %d
 
+	#define MAX_NUMBER_OF_OR_GROUP_CHILDREN %d
+
 	#define NEGATIVE_CLAUSES %d
 	#define FLIP_POLARITY %d
-		""" % (self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_ta_teams, self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.log_scale, AND_GROUP, AND_ALTERNATIVES, OR_GROUP, OR_ALTERNATIVES, self.negative_clauses, self.flip_polarity)
+		""" % (self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_ta_teams, self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.log_scale, AND_GROUP, AND_ALTERNATIVES, OR_GROUP, OR_ALTERNATIVES, self.max_number_of_or_group_children, self.negative_clauses, self.flip_polarity)
 		
 		mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
 		self.prepare_weights = mod_prepare.get_function("prepare_weights")

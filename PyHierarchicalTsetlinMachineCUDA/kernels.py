@@ -321,7 +321,7 @@ code_update = """
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			int non_zero_children[361];
+			int non_zero_children[MAX_NUMBER_OF_OR_GROUP_CHILDREN];
 
 			/* Copy state to local memory for efficiency */  
 			curandState localState = state[index];
