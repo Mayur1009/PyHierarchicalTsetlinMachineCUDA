@@ -315,13 +315,13 @@ code_update = """
 				}
 			}
 		}
-
+		
 		__global__ void propagate_or_group_false_truth_values(curandState *state, float *child_input, float *group_node_output, int number_of_group_nodes, int number_of_group_node_children)
 		{
 			int index = blockIdx.x * blockDim.x + threadIdx.x;
 			int stride = blockDim.x * gridDim.x;
 
-			int non_zero_children[MAX_NUMBER_OF_OR_GROUP_CHILDREN];
+			int child_input_sum;
 
 			/* Copy state to local memory for efficiency */  
 			curandState localState = state[index];
@@ -361,23 +361,32 @@ code_update = """
 							}
 						}
 					} else {
+						child_input_sum = 0;
 						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							if (child_input[group_node*number_of_group_node_children + or_addend] > 0) { // Or pick the largest.... picking randomly when a tie
-								non_zero_children[number_of_non_zero_children] = or_addend;
-								number_of_non_zero_children++;
-							}
+							child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
 						}
 					}
 				#endif
 
+				// Skips node if "turned off" (-1)
 				if (group_node_output[group_node] != -1) {
 					int selected_child;
-					if (number_of_non_zero_children > 0) {
-						selected_child = non_zero_children[curand(&localState) % number_of_non_zero_children];
+					if (child_input_sum > 0) {
+						int random_child_value = curand(&localState) % child_input_sum;
+						child_input_sum = 0;
+						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
+								child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
+								if (child_input_sum > random_child_value) {
+									selected_child = or_addend;
+									break;
+								}
+							}
+						}
 					} else {
 						selected_child = curand(&localState) % number_of_group_node_children;
 					}
 					
+					// "Turn off" the sub-hierarchies that were not selected 
 					for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
 						if (selected_child != or_addend) {
 							child_input[group_node*number_of_group_node_children + or_addend] = -1;
