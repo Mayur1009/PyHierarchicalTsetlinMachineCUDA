@@ -373,11 +373,10 @@ code_update = """
 						int random_child_value = curand(&localState) % child_input_sum;
 						child_input_sum = 0;
 						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-								child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
-								if (child_input_sum > random_child_value) {
-									selected_child = or_addend;
-									break;
-								}
+							child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
+							if (child_input_sum > random_child_value) {
+								selected_child = or_addend;
+								break;
 							}
 						}
 					} else {
