@@ -328,8 +328,6 @@ code_update = """
 
 			// If a group node is false, all children are made false.
 			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
-				int number_of_non_zero_children = 0;
-
 				#if LOG_SCALE == 1
 					if (group_node_output[group_node] == -1) {
 						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
