@@ -244,9 +244,9 @@ code_update = """
 				for (int or_addend = 0; or_addend < number_of_or_group_addends; ++or_addend) {
 					// Aggregate votes from each child node through addition
 
-					//if (child_input[or_group_node*number_of_or_group_addends + or_addend] > max_vote_sum) {
-						max_vote_sum += child_input[or_group_node*number_of_or_group_addends + or_addend];
-					//}
+					if (child_input[or_group_node*number_of_or_group_addends + or_addend] > max_vote_sum) {
+						max_vote_sum = child_input[or_group_node*number_of_or_group_addends + or_addend];
+					}
 				}
 
 				or_group_node_output[or_group_node] = max_vote_sum;
@@ -340,10 +340,10 @@ code_update = """
 							}
 						}
 					} else {
+						child_input_sum = 0;
 						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
 							if (child_input[group_node*number_of_group_node_children + or_addend] >= 0) {
-								non_zero_children[number_of_non_zero_children] = or_addend;
-								number_of_non_zero_children++;
+								child_input_sum += np.exp2f(child_input[group_node*number_of_group_node_children + or_addend]); // Needs normalization
 							}
 						}
 					}
@@ -361,7 +361,9 @@ code_update = """
 					} else {
 						child_input_sum = 0;
 						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
+							if (child_input[group_node*number_of_group_node_children + or_addend] > 0) {
+								child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
+							}
 						}
 					}
 				#endif
