@@ -244,9 +244,9 @@ code_update = """
 				for (int or_addend = 0; or_addend < number_of_or_group_addends; ++or_addend) {
 					// Aggregate votes from each child node through addition
 
-					if (child_input[or_group_node*number_of_or_group_addends + or_addend] > max_vote_sum) {
-						max_vote_sum = child_input[or_group_node*number_of_or_group_addends + or_addend];
-					}
+					//if (child_input[or_group_node*number_of_or_group_addends + or_addend] > max_vote_sum) {
+						max_vote_sum += child_input[or_group_node*number_of_or_group_addends + or_addend];
+					//}
 				}
 
 				or_group_node_output[or_group_node] = max_vote_sum;
