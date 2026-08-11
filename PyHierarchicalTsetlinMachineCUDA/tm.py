@@ -103,8 +103,6 @@ class CommonTsetlinMachine():
 			if self.hierarchy_structure[d][0] == OR_GROUP and self.max_number_of_or_group_children < self.hierarchy_structure[d][1]:
 				self.max_number_of_or_group_children = self.hierarchy_structure[d][1]
 
-		print("MAX NUMBER OF GROUP CHILDREN", self.max_number_of_or_group_children)
-
 		# Calculates number of literal chunks overall for the feature vector (ignores OR- and AND alternatives)
 		self.number_of_literal_chunks = self.number_of_literal_chunks_per_leaf
 		for d in range(self.depth - 1, 0, -1):
