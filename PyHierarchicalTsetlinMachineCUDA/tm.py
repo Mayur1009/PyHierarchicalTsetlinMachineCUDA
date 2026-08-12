@@ -790,7 +790,7 @@ class MultiClassTsetlinMachine:
 
 	def print_hierarchy(self, print_ta_state=False):
 		for i in range(self.number_of_outputs):
-			print("CLASS %d\n" % (i,))
+			print("\nCLASS %d\n" % (i,))
 			self.tms[i].print_hierarchy(print_ta_state = print_ta_state)
 
 	def load(self, state_dict: dict):
