@@ -7,10 +7,10 @@ import argparse
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--epochs", default=1000, type=int)
-	parser.add_argument("--number-of-clauses", default=4, type=int)
+	parser.add_argument("--number-of-clauses", default=2, type=int)
 	parser.add_argument("--number-of-examples", default=10000, type=int)
-	parser.add_argument("--T", default=256, type=int)
-	parser.add_argument("--s", default=18.1, type=float)
+	parser.add_argument("--T", default=128, type=int)
+	parser.add_argument("--s", default=21.1, type=float)
 	parser.add_argument("--number-of-alternatives", default=64, type=int)
 	parser.add_argument("--number-of-elements", default=16, type=int)
 	parser.add_argument("--number-of-copies", default=2, type=int)
