@@ -7,7 +7,7 @@ from keras.datasets import mnist
 or_alternatives = 100
 
 clauses = 4
-T = or_alternatives
+T = 0.8*or_alternatives*or_alternatives*4
 s = 20.0
 
 number_of_training_examples = 10000
