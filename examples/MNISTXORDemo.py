@@ -4,11 +4,29 @@ from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
 from keras.datasets import mnist
 
-or_alternatives = 4
+def default_args(**kwargs):
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--epochs", default=1000, type=int)
+	parser.add_argument("--number-of-clauses", default=2, type=int)
+	parser.add_argument("--number-of-examples", default=10000, type=int)
+	parser.add_argument("--T", default=32, type=int)
+	parser.add_argument("--s", default=40.0, type=float)
+	parser.add_argument("--number-of-alternatives", default=64, type=int)
+	parser.add_argument("--number-of-elements", default=8, type=int)
+	parser.add_argument("--number-of-copies", default=2, type=int)
+	parser.add_argument("--noise", default=0.0, type=float)
+	args = parser.parse_args()
+	for key, value in kwargs.items():
+		if key in args.__dict__:
+			setattr(args, key, value)
+	return args
 
-clauses = 4
-T = 0.8*or_alternatives*or_alternatives*4
-s = 20.0
+args = default_args()
+
+or_alternatives = args.number_of_alternatives
+clauses = args.number_of_clauses
+T = args.T
+s = args.s
 
 number_of_training_examples = 10000
 number_of_testing_examples = 1000
