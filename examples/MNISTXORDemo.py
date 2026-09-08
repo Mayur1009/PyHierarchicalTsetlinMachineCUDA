@@ -38,9 +38,13 @@ for i in range(number_of_testing_examples):
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
 
+
 print(X_train.shape)
 print(X_test.shape)
-
+print(Y_train.sum())
+print(Y_train)
+print(Y_test.sum())
+print(Y_test)
 tm = MultiClassTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.AND_GROUP, 28*28), (tm.OR_ALTERNATIVES, 2000), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 500 epochs:\n")
