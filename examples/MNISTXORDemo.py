@@ -11,7 +11,7 @@ s = 10.0
 number_of_training_examples = 10000
 number_of_testing_examples = 1000
 
-(X_mnist_train, Y_train_mninst), (X_mnist_test, Y_test_mnist) = mnist.load_data()
+(X_mnist_train, Y_train_mninst), (X_mnist_test, Y_mnist_test) = mnist.load_data()
 
 X_mnist_train = np.where(X_mnist_train.reshape((X_mnist_train.shape[0], 28*28)) > 75, 1, 0)
 X_mnist_test = np.where(X_mnist_test.reshape((X_mnist_test.shape[0], 28*28)) > 75, 1, 0)
