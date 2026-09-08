@@ -3,6 +3,7 @@ import numpy as np
 from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
 from keras.datasets import mnist
+import argparse
 
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
