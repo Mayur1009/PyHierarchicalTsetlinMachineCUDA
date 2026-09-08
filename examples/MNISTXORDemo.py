@@ -16,7 +16,7 @@ number_of_testing_examples = 1000
 X_mnist_train = np.where(X_mnist_train.reshape((X_mnist_train.shape[0], 28*28)) > 75, 1, 0)
 X_mnist_test = np.where(X_mnist_test.reshape((X_mnist_test.shape[0], 28*28)) > 75, 1, 0)
 
-x_mnist_train_count = [X_mnist_train[Y_mnist_train == x[0]].shape[0], X_mnist_train[Y_mnist_train == x[0]].shape[0]]
+x_mnist_train_count = [X_mnist_train[Y_mnist_train == 0].shape[0], X_mnist_train[Y_mnist_train == 1].shape[0]]
 
 X_train = np.empty((number_of_training_examples, 28*28*2))
 Y_train = np.empty(number_of_training_examples)
@@ -27,7 +27,6 @@ for i in range(number_of_training_examples):
 	X_train[i,28*28:] = X_mnist_train[Y_mnist_train == x[1]][np.random.randint(x_mnist_train_count[x[1]])]	
 
 	Y_train[i] = np.logical_xor(x[0], x[1])
-
 
 X_test = np.empty((number_of_testing_examples, 28*28*2))
 Y_test = np.empty(number_of_testing_examples)
