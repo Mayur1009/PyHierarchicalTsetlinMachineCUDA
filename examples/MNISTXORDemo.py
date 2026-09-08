@@ -17,7 +17,7 @@ X_mnist_train = np.where(X_mnist_train.reshape((X_mnist_train.shape[0], 28*28)) 
 X_mnist_test = np.where(X_mnist_test.reshape((X_mnist_test.shape[0], 28*28)) > 75, 1, 0)
 
 X_train = np.empty((number_of_training_examples, 28*28*2))
-Y_train = np.empty((number_of_training_examples, 28*28*2))
+Y_train = np.empty(number_of_training_examples)
 for i in range(number_of_training_examples):
 	x = np.random.randint(2, size=(2))
 
@@ -28,7 +28,7 @@ for i in range(number_of_training_examples):
 
 
 X_test = np.empty((number_of_testing_examples, 28*28*2))
-Y_test = np.empty((number_of_testing_examples, 28*28*2))
+Y_test = np.empty(number_of_testing_examples)
 for i in range(number_of_testing_examples):
 	x = np.random.randint(2, size=(2))
 
@@ -37,14 +37,6 @@ for i in range(number_of_testing_examples):
 
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
-
-
-print(X_train.shape)
-print(X_test.shape)
-print(Y_train.sum())
-print(Y_train.shape)
-print(Y_test.sum())
-print(Y_test.shape)
 tm = MultiClassTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.AND_GROUP, 28*28), (tm.OR_ALTERNATIVES, 2000), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 500 epochs:\n")
