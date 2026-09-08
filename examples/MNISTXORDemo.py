@@ -22,7 +22,7 @@ for i in range(number_of_training_examples):
 	x = np.random.randint(2, size=(2))
 
 	X_train[i,:28*28] = X_mnist_train[Y_mnist_train == x[0]][np.random.randint(X_mnist_train[Y_mnist_train == x[0]].shape[0])]
-	X_train[i,28*28:] = X_mnist_train[(Y_mnist_train == x[1]).shape[0]][np.random.randint(X_mnist_train[Y_mnist_train == x[1]].shape[0])]	
+	X_train[i,28*28:] = X_mnist_train[Y_mnist_train == x[1]][np.random.randint(X_mnist_train[Y_mnist_train == x[1]].shape[0])]	
 
 	Y_train[i] = np.logical_xor(x[0], x[1])
 
