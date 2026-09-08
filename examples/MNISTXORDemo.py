@@ -4,7 +4,7 @@ from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
 from keras.datasets import mnist
 
-or_alternatives = 100
+or_alternatives = 4
 
 clauses = 4
 T = 0.8*or_alternatives*or_alternatives*4
@@ -30,6 +30,8 @@ for i in range(number_of_training_examples):
 
 	Y_train[i] = np.logical_xor(x[0], x[1])
 
+np.savetxt("examples/MNISTXORTrainingData.txt", np.append(X_train, Y_train.reshape((number_of_examples, 1)), axis=1), fmt='%d')
+
 X_test = np.empty((number_of_testing_examples, 28*28*2))
 Y_test = np.empty(number_of_testing_examples)
 for i in range(number_of_testing_examples):
@@ -40,7 +42,17 @@ for i in range(number_of_testing_examples):
 
 	Y_test[i] = np.logical_xor(x[0], x[1])
 
-tm = MultiClassTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.AND_GROUP, 28*28), (tm.OR_ALTERNATIVES, 100), (tm.AND_GROUP, 2)))
+np.savetxt("examples/MNISTXORTestingData.txt", np.append(X_test, Y_test.reshape((number_of_examples, 1)), axis=1), fmt='%d')
+
+train_data = np.loadtxt("./examples/MNISTXORTrainingData.txt").astype(np.uint32)
+X_train = train_data[:,0:-1]
+Y_train = train_data[:,-1]
+
+test_data = np.loadtxt("./examples/MNISTXORTestingData.txt").astype(np.uint32)
+X_test = test_data[:,0:-1]
+Y_test = test_data[:,-1]
+
+tm = MultiClassTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.AND_GROUP, 28*28), (tm.OR_ALTERNATIVES, or_alternatives), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 500 epochs:\n")
 for i in range(500):
