@@ -21,8 +21,8 @@ Y_train = np.empty(number_of_training_examples)
 for i in range(number_of_training_examples):
 	x = np.random.randint(2, size=(2))
 
-	X_train[i,:28*28] = X_mnist_train[Y_mnist_train == x[0]][0]
-	X_train[i,28*28:] = X_mnist_train[Y_mnist_train == x[1]][0]	
+	X_train[i,:28*28] = X_mnist_train[Y_mnist_train == x[0]][np.random.randint((Y_mnist_train == x[0]).shape[0])]
+	X_train[i,28*28:] = X_mnist_train[(Y_mnist_train == x[1]).shape[0]][np.random.randint((Y_mnist_train == x[1]).shape[0])]	
 
 	Y_train[i] = np.logical_xor(x[0], x[1])
 
@@ -32,8 +32,8 @@ Y_test = np.empty(number_of_testing_examples)
 for i in range(number_of_testing_examples):
 	x = np.random.randint(2, size=(2))
 
-	X_test[i,:28*28] = X_mnist_train[Y_mnist_train == x[0]][0]
-	X_test[i,28*28:] = X_mnist_train[Y_mnist_train == x[1]][0]	
+	X_test[i,:28*28] = X_mnist_train[Y_mnist_train == x[0]][np.random.randint((Y_mnist_train == x[0]).shape[0])]
+	X_test[i,28*28:] = X_mnist_train[Y_mnist_train == x[1]][np.random.randint((Y_mnist_train == x[1]).shape[0])]	
 
 	Y_test[i] = np.logical_xor(x[0], x[1])
 
