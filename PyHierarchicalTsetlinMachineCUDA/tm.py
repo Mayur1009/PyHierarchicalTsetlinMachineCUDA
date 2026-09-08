@@ -25,7 +25,7 @@ import PyHierarchicalTsetlinMachineCUDA.kernels as kernels
 
 import pycuda.curandom as curandom
 import pycuda.driver as cuda
-import pycuda.autoinit
+import pycuda.autoprimaryctx
 from pycuda.compiler import SourceModule
 from pycuda import gpuarray
 from pycuda.gpuarray import GPUArray 
