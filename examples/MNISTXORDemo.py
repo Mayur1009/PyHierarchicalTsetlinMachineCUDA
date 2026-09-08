@@ -5,7 +5,7 @@ import PyHierarchicalTsetlinMachineCUDA.tm as tm
 from keras.datasets import mnist
 
 clauses = 4
-T = 10
+T = 13
 s = 20.0
 
 number_of_training_examples = 10000
@@ -37,7 +37,7 @@ for i in range(number_of_testing_examples):
 
 	Y_test[i] = np.logical_xor(x[0], x[1])
 
-tm = MultiClassTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.AND_GROUP, 28*28), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
+tm = MultiClassTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.AND_GROUP, 28*28), (tm.OR_ALTERNATIVES, 4), (tm.AND_GROUP, 2)))
 
 print("\nAccuracy over 500 epochs:\n")
 for i in range(500):
