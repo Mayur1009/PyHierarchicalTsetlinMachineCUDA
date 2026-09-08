@@ -24,7 +24,7 @@ for i in range(number_of_training_examples):
 	X_train[i,:28*28] = X_mnist_train[Y_mnist_train == x[0]][0]
 	X_train[i,28*28:] = X_mnist_train[Y_mnist_train == x[1]][0]	
 
-	Y_train[i] = np.logical_xor(x[0], x[1])
+	Y_train[i] = x[0] #np.logical_xor(x[0], x[1])
 
 
 X_test = np.empty((number_of_testing_examples, 28*28*2))
@@ -35,7 +35,7 @@ for i in range(number_of_testing_examples):
 	X_test[i,:28*28] = X_mnist_train[Y_mnist_train == x[0]][0]
 	X_test[i,28*28:] = X_mnist_train[Y_mnist_train == x[1]][0]	
 
-	Y_test[i] = np.logical_xor(x[0], x[1])
+	Y_test[i] = x[0] #np.logical_xor(x[0], x[1])
 
 tm = MultiClassTsetlinMachine(clauses, T, s, hierarchy_structure=((tm.AND_GROUP, 28*28), (tm.OR_ALTERNATIVES, 2), (tm.AND_GROUP, 2)))
 
