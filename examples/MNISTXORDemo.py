@@ -5,7 +5,7 @@ import PyHierarchicalTsetlinMachineCUDA.tm as tm
 from keras.datasets import mnist
 
 clauses = 4
-T = 50
+T = 50*50
 s = 10.0
 
 number_of_training_examples = 10000
