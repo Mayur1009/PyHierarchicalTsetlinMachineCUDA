@@ -104,7 +104,8 @@ for i in range(10):
 				(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
 				(tm.OR_ALTERNATIVES, args.number_of_alternatives),
 				(tm.AND_GROUP, args.number_of_ands)
-			)
+			),
+			seed=np.random.randint(np.iinfo(np.int32).max)
 		)
 	else:
 		tsetlin_machine = TsetlinMachine(
@@ -116,7 +117,8 @@ for i in range(10):
 			hierarchy_structure=(
 				(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
 				(tm.OR_ALTERNATIVES, args.number_of_alternatives)
-			)
+			),
+			seed=np.random.randint(np.iinfo(np.int32).max)
 		)
 
 	start_training = time()
