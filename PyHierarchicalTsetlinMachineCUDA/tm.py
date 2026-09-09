@@ -573,10 +573,10 @@ class CommonTsetlinMachine():
 						size *= self.hierarchy_structure[d][1];
 
 					if previous_index[d-1] == -1:
-						left.append("\n" + "\t" * len(left) + "(")
+						left.append("(")
 					elif depth_d_node_index == 0 and previous_index[d-1] != depth_d_node_index:
 						right.append(")")
-						left.insert(0, "\n" + "\t" * len(left) + "(")
+						left.insert(0, "(")
 					elif previous_index[d-1] != depth_d_node_index:
 						if self.hierarchy_structure[d][0] in [AND_GROUP, AND_ALTERNATIVES]:
 							inside.append(" ∧ ")
