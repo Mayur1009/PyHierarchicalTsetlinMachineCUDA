@@ -90,33 +90,34 @@ for i in range(args.number_of_testing_examples):
 			else:
 				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,1]
 
-if not args.vanilla:
-	tm = TsetlinMachine(
-		args.number_of_clauses,
-		args.T,
-		args.s,
-		number_of_state_bits=8,
-		hierarchy_structure=(
-			(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
-			(tm.OR_ALTERNATIVES, args.number_of_alternatives),
-			(tm.AND_GROUP, args.number_of_ands)
-		)
-	)
-else:
-	tm = TsetlinMachine(
-		args.number_of_clauses,
-		args.T,
-		args.s,
-		number_of_state_bits=8,
-		boost_true_positive_feedback=0,
-		hierarchy_structure=(
-			(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
-			(tm.OR_ALTERNATIVES, args.number_of_alternatives)
-		)
-	)
 
 average_result = 0
 for i in range(10):
+	if not args.vanilla:
+		tm = TsetlinMachine(
+			args.number_of_clauses,
+			args.T,
+			args.s,
+			number_of_state_bits=8,
+			hierarchy_structure=(
+				(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
+				(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+				(tm.AND_GROUP, args.number_of_ands)
+			)
+		)
+	else:
+		tm = TsetlinMachine(
+			args.number_of_clauses,
+			args.T,
+			args.s,
+			number_of_state_bits=8,
+			boost_true_positive_feedback=0,
+			hierarchy_structure=(
+				(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
+				(tm.OR_ALTERNATIVES, args.number_of_alternatives)
+			)
+		)
+	
 	for e in range(args.epochs):
 		start_training = time()
 		tm.fit(X_train, Y_train)
