@@ -30,7 +30,7 @@ for i in range(args.number_of_examples):
 
 	Y_train[i] = 1
 	for j in range(args.number_of_ands):
-		Y_train[i] = np.logical_and(Y_train[i], np.logical_xor(X_train[i, j * 2], X_train[i, j * 2 + 1]))
+		Y_train[i] = np.logical_and(Y_train[i], np.logical_xor(X_train[i, j * (2 + args.number_of_irrelevant_features)], X_train[i, j * (2 + args.number_of_irrelevant_features) + 1]))
 
 Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
 
@@ -41,7 +41,7 @@ for i in range(args.number_of_examples):
 
 	Y_test[i] = 1
 	for j in range(args.number_of_ands):
-		Y_test[i] = np.logical_and(Y_test[i], np.logical_xor(X_test[i, j * 2], X_test[i, j * 2 + 1]))
+		Y_test[i] = np.logical_and(Y_test[i], np.logical_xor(X_test[i, j * (2 + args.number_of_irrelevant_features)], X_test[i, j * (2 + args.number_of_irrelevant_features) + 1]))
 
 tm = MultiClassTsetlinMachine(
 	args.number_of_clauses,
