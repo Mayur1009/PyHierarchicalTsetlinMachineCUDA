@@ -1,0 +1,74 @@
+from PyHierarchicalTsetlinMachineCUDA.tm import MultiClassTsetlinMachine
+import numpy as np
+from time import time
+import PyHierarchicalTsetlinMachineCUDA.tm as tm
+import argparse
+
+def default_args(**kwargs):
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--epochs", default=1000, type=int)
+	parser.add_argument("--number-of-clauses", default=2, type=int)
+	parser.add_argument("--number-of-examples", default=10000, type=int)
+	parser.add_argument("--T", default=15, type=int)
+	parser.add_argument("--s", default=4.0, type=float)
+	parser.add_argument("--number-of-alternatives", default=10, type=int)
+	parser.add_argument("--number-of-ands", default=2, type=int)
+	parser.add_argument("--noise", default=0.0, type=float)
+	args = parser.parse_args()
+	for key, value in kwargs.items():
+		if key in args.__dict__:
+			setattr(args, key, value)
+	return args
+
+args = default_args()
+
+X_train = np.zeros((args.number_of_examples, args.number_of_ands*2), dtype=np.uint32)
+Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
+for i in range(args.number_of_examples):
+	x = 
+
+	X_train[i, :] = np.random.randint(2, size=(args.number_of_ands*2))
+
+	Y_train[i] = 1
+	for j in range(args.number_of_ands):
+		Y_train[i] = np.logical_and(Y_train[i], np.logical_xor(X_train[i, j * 2], X_train[i, j * 2 + 1]))
+
+Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
+
+X_test = np.zeros((args.number_of_examples, args.number_of_ands*2), dtype=np.uint32)
+Y_test = np.zeros(args.number_of_examples, dtype=np.uint32)
+for i in range(args.number_of_examples):
+	x = 
+
+	X_test[i, :] = np.random.randint(2, size=(args.number_of_ands*2))
+
+	Y_test[i] = 1
+	for j in range(args.number_of_ands):
+		Y_test[i] = np.logical_and(Y_test[i], np.logical_xor(X_test[i, j * 2], X_test[i, j * 2 + 1]))
+
+tm = MultiClassTsetlinMachine(
+	args.number_of_clauses,
+	args.T,
+	args.s,
+	number_of_state_bits=8,
+	boost_true_positive_feedback=0,
+	hierarchy_structure=(
+		(tm.AND_GROUP, 2),
+		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+		(tm.AND_ALTERNATIVES, args.number_of_ands)
+	)
+)
+
+print("\nAccuracy over %d epochs:\n" % (args.epochs))
+for e in range(args.epochs):
+	start_training = time()
+	tm.fit(X_train, Y_train)
+	stop_training = time()
+
+	start_testing = time()
+	result = 100*(tm.predict(X_test) == Y_test).mean()
+	stop_testing = time()
+
+	tm.print_hierarchy(print_ta_state=True)
+
+	print("\n#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (e+1, result, stop_training-start_training, stop_testing-start_testing))
