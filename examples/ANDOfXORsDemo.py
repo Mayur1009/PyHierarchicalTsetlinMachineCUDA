@@ -14,7 +14,6 @@ def default_args(**kwargs):
 	parser.add_argument("--s", default=4.0, type=float)
 	parser.add_argument("--number-of-alternatives", default=10, type=int)
 	parser.add_argument("--number-of-ands", default=2, type=int)
-	parser.add_argument("--vanilla", default=2, type=int)
 	parser.add_argument("--noise", default=0.0, type=float)
 	parser.add_argument('--vanilla', action='store_true')
 
