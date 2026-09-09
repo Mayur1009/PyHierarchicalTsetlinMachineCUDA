@@ -52,7 +52,7 @@ tm = MultiClassTsetlinMachine(
 	hierarchy_structure=(
 		(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
 		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
-		(tm.AND_ALTERNATIVES, args.number_of_ands)
+		(tm.AND_GROUPS, args.number_of_ands)
 	)
 )
 
