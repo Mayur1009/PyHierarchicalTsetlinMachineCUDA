@@ -13,8 +13,8 @@ def default_args(**kwargs):
 	parser.add_argument("--T", default=20, type=int)
 	parser.add_argument("--s", default=2.1, type=float)
 	parser.add_argument("--number-of-alternatives", default=10, type=int)
-	parser.add_argument("--number-of-ands", default=4, type=int)
-	parser.add_argument("--noise", default=0.0, type=float)
+	parser.add_argument("--number-of-ands", default=3, type=int)
+	parser.add_argument("--noise", default=0.01, type=float)
 	parser.add_argument('--vanilla', action='store_true')
 
 	args = parser.parse_args()
