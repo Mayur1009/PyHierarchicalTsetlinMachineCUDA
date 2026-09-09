@@ -6,7 +6,7 @@ import argparse
 
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--epochs", default=25, type=int)
+	parser.add_argument("--epochs", default=100, type=int)
 	parser.add_argument("--number-of-clauses", default=2, type=int)
 	parser.add_argument("--number-of-irrelevant-features", default=1, type=int)
 	parser.add_argument("--number-of-training-examples", default=10000, type=int)
