@@ -126,7 +126,7 @@ for i in range(10):
 		start_testing = time()
 		result = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
 		if result > max_result:
-			max_result = max_result
+			max_result = result
 		stop_testing = time()
 
 	stop_training = time()
