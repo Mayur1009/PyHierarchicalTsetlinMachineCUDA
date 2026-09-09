@@ -118,10 +118,10 @@ for i in range(10):
 			)
 		)
 
+	start_training = time()
 	for e in range(args.epochs):
-		start_training = time()
 		tsetlin_machine.fit(X_train, Y_train)
-		stop_training = time()
+	stop_training = time()
 
 	start_testing = time()
 	result = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
