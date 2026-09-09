@@ -25,8 +25,6 @@ args = default_args()
 X_train = np.zeros((args.number_of_examples, args.number_of_ands*2), dtype=np.uint32)
 Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
-	x = 
-
 	X_train[i, :] = np.random.randint(2, size=(args.number_of_ands*2))
 
 	Y_train[i] = 1
@@ -38,8 +36,6 @@ Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_
 X_test = np.zeros((args.number_of_examples, args.number_of_ands*2), dtype=np.uint32)
 Y_test = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
-	x = 
-
 	X_test[i, :] = np.random.randint(2, size=(args.number_of_ands*2))
 
 	Y_test[i] = 1
