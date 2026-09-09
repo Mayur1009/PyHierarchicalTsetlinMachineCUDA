@@ -599,12 +599,12 @@ class CommonTsetlinMachine():
 					if self.ta_action(i, j, k):
 						if (not self.append_negated) or k < self.number_of_literals_per_leaf // 2:
 							if print_ta_state:
-								l.append("x%d(%d)" % (feature_base + k, self.ta_state(i, j, k)))
+								l.append("x%d[%d]" % (feature_base + k, self.ta_state(i, j, k)))
 							else:
 								l.append("x%d" % (feature_base + k,))
 						else:
 							if print_ta_state:
-								l.append("¬x%d(%d)" % (feature_base + k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k)))
+								l.append("¬x%d[%d]" % (feature_base + k - self.number_of_literals_per_leaf // 2, self.ta_state(i, j, k)))
 							else:
 								l.append("¬x%d" % (feature_base + k - self.number_of_literals_per_leaf // 2,))
 				
