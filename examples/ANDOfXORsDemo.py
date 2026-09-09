@@ -90,7 +90,7 @@ for i in range(args.number_of_examples):
 				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,1]
 
 if not args.vanilla:
-	tm = MultiClassTsetlinMachine(
+	tm = TsetlinMachine(
 		args.number_of_clauses,
 		args.T,
 		args.s,
@@ -102,7 +102,7 @@ if not args.vanilla:
 		)
 	)
 else:
-	tm = MultiClassTsetlinMachine(
+	tm = TsetlinMachine(
 		args.number_of_clauses,
 		args.T,
 		args.s,
