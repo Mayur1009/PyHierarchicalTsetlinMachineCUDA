@@ -43,6 +43,19 @@ for i in range(args.number_of_examples):
 	for j in range(args.number_of_ands):
 		Y_test[i] = np.logical_and(Y_test[i], np.logical_xor(X_test[i, j * 2], X_test[i, j * 2 + 1]))
 
+# tm = MultiClassTsetlinMachine(
+# 	args.number_of_clauses,
+# 	args.T,
+# 	args.s,
+# 	number_of_state_bits=8,
+# 	boost_true_positive_feedback=0,
+# 	hierarchy_structure=(
+# 		(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
+# 		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+# 		(tm.AND_GROUP, args.number_of_ands)
+# 	)
+# )
+
 tm = MultiClassTsetlinMachine(
 	args.number_of_clauses,
 	args.T,
@@ -50,11 +63,11 @@ tm = MultiClassTsetlinMachine(
 	number_of_state_bits=8,
 	boost_true_positive_feedback=0,
 	hierarchy_structure=(
-		(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
-		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
-		(tm.AND_GROUP, args.number_of_ands)
+		(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
+		(tm.OR_ALTERNATIVES, args.number_of_alternatives)
 	)
 )
+
 
 print("\nAccuracy over %d epochs:\n" % (args.epochs))
 for e in range(args.epochs):
