@@ -94,7 +94,7 @@ for i in range(args.number_of_testing_examples):
 average_result = 0
 for i in range(10):
 	if not args.vanilla:
-		tm = TsetlinMachine(
+		tsetlin_machine = TsetlinMachine(
 			args.number_of_clauses,
 			args.T,
 			args.s,
@@ -106,7 +106,7 @@ for i in range(10):
 			)
 		)
 	else:
-		tm = TsetlinMachine(
+		tsetlin_machine = TsetlinMachine(
 			args.number_of_clauses,
 			args.T,
 			args.s,
@@ -117,14 +117,14 @@ for i in range(10):
 				(tm.OR_ALTERNATIVES, args.number_of_alternatives)
 			)
 		)
-	
+
 	for e in range(args.epochs):
 		start_training = time()
-		tm.fit(X_train, Y_train)
+		tsetlin_machine.fit(X_train, Y_train)
 		stop_training = time()
 
 	start_testing = time()
-	result = 100*(tm.predict(X_test) == Y_test).mean()
+	result = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
 	stop_testing = time()
 
 	average_result += result / 10.0
