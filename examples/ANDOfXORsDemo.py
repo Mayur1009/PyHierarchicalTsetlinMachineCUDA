@@ -8,6 +8,7 @@ def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--epochs", default=1000, type=int)
 	parser.add_argument("--number-of-clauses", default=2, type=int)
+	parser.add_argument("--number-of-irrelevant-features", default=0, type=int)
 	parser.add_argument("--number-of-examples", default=10000, type=int)
 	parser.add_argument("--T", default=15, type=int)
 	parser.add_argument("--s", default=4.0, type=float)
@@ -22,10 +23,10 @@ def default_args(**kwargs):
 
 args = default_args()
 
-X_train = np.zeros((args.number_of_examples, args.number_of_ands*2), dtype=np.uint32)
+X_train = np.zeros((args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
 Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
-	X_train[i, :] = np.random.randint(2, size=(args.number_of_ands*2))
+	X_train[i, :] = np.random.randint(2, size=(args.number_of_ands*(2 + args.number_of_irrelevant_features)))
 
 	Y_train[i] = 1
 	for j in range(args.number_of_ands):
@@ -33,10 +34,10 @@ for i in range(args.number_of_examples):
 
 Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
 
-X_test = np.zeros((args.number_of_examples, args.number_of_ands*2), dtype=np.uint32)
+X_test = np.zeros((args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
 Y_test = np.zeros(args.number_of_examples, dtype=np.uint32)
 for i in range(args.number_of_examples):
-	X_test[i, :] = np.random.randint(2, size=(args.number_of_ands*2))
+	X_test[i, :] = np.random.randint(2, size=(args.number_of_ands*(2 + args.number_of_irrelevant_features)))
 
 	Y_test[i] = 1
 	for j in range(args.number_of_ands):
