@@ -9,9 +9,10 @@ def default_args(**kwargs):
 	parser.add_argument("--epochs", default=1000, type=int)
 	parser.add_argument("--number-of-clauses", default=2, type=int)
 	parser.add_argument("--number-of-irrelevant-features", default=1, type=int)
-	parser.add_argument("--number-of-examples", default=10000, type=int)
+	parser.add_argument("--number-of-training-examples", default=50, type=int)
+	parser.add_argument("--number-of-testing-examples", default=1000, type=int)
 	parser.add_argument("--T", default=20, type=int)
-	parser.add_argument("--s", default=2.1, type=float)
+	parser.add_argument("--s", default=2.5, type=float)
 	parser.add_argument("--number-of-alternatives", default=10, type=int)
 	parser.add_argument("--number-of-ands", default=3, type=int)
 	parser.add_argument("--noise", default=0.01, type=float)
@@ -27,10 +28,10 @@ args = default_args()
 
 and_factors = np.empty(args.number_of_ands, dtype=np.uint32)
 
-X_train = np.random.randint(2, size=(args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
-Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
+X_train = np.random.randint(2, size=(args.number_of_training_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
+Y_train = np.zeros(args.number_of_training_examples, dtype=np.uint32)
 
-for i in range(args.number_of_examples):
+for i in range(args.number_of_training_examples):
 	Y_train[i] = np.random.randint(2)
 	if Y_train[i] == 1:
 		and_factors[:] = 1
@@ -57,12 +58,12 @@ for i in range(args.number_of_examples):
 			else:
 				X_train[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,1]
 
-Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
+Y_train = np.where(np.random.rand(args.number_of_training_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
 
-X_test = np.random.randint(2, size=(args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
-Y_test = np.zeros(args.number_of_examples, dtype=np.uint32)
+X_test = np.random.randint(2, size=(args.number_of_testing_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
+Y_test = np.zeros(args.number_of_testing_examples, dtype=np.uint32)
 
-for i in range(args.number_of_examples):
+for i in range(args.number_of_testing_examples):
 	Y_test[i] = np.random.randint(2)
 	if Y_test[i] == 1:
 		and_factors[:] = 1
@@ -120,9 +121,9 @@ for e in range(args.epochs):
 	tm.fit(X_train, Y_train)
 	stop_training = time()
 
-	start_testing = time()
-	result = 100*(tm.predict(X_test) == Y_test).mean()
-	stop_testing = time()
+start_testing = time()
+result = 100*(tm.predict(X_test) == Y_test).mean()
+stop_testing = time()
 
 tm.print_hierarchy(print_ta_state=True)
 
