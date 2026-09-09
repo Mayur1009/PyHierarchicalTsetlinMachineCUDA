@@ -14,7 +14,10 @@ def default_args(**kwargs):
 	parser.add_argument("--s", default=4.0, type=float)
 	parser.add_argument("--number-of-alternatives", default=10, type=int)
 	parser.add_argument("--number-of-ands", default=2, type=int)
+	parser.add_argument("--vanilla", default=2, type=int)
 	parser.add_argument("--noise", default=0.0, type=float)
+	parser.add_argument('--vanilla', action='store_true')
+
 	args = parser.parse_args()
 	for key, value in kwargs.items():
 		if key in args.__dict__:
@@ -43,29 +46,30 @@ for i in range(args.number_of_examples):
 	for j in range(args.number_of_ands):
 		Y_test[i] = np.logical_and(Y_test[i], np.logical_xor(X_test[i, j * (2 + args.number_of_irrelevant_features)], X_test[i, j * (2 + args.number_of_irrelevant_features) + 1]))
 
-tm = MultiClassTsetlinMachine(
-	args.number_of_clauses,
-	args.T,
-	args.s,
-	number_of_state_bits=8,
-	hierarchy_structure=(
-		(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
-		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
-		(tm.AND_GROUP, args.number_of_ands)
+if not args.vanilla:
+	tm = MultiClassTsetlinMachine(
+		args.number_of_clauses,
+		args.T,
+		args.s,
+		number_of_state_bits=8,
+		hierarchy_structure=(
+			(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
+			(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+			(tm.AND_GROUP, args.number_of_ands)
+		)
 	)
-)
-
-# tm = MultiClassTsetlinMachine(
-# 	args.number_of_clauses,
-# 	args.T,
-# 	args.s,
-# 	number_of_state_bits=8,
-# 	boost_true_positive_feedback=0,
-# 	hierarchy_structure=(
-# 		(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
-# 		(tm.OR_ALTERNATIVES, args.number_of_alternatives)
-# 	)
-# )
+else:
+	tm = MultiClassTsetlinMachine(
+		args.number_of_clauses,
+		args.T,
+		args.s,
+		number_of_state_bits=8,
+		boost_true_positive_feedback=0,
+		hierarchy_structure=(
+			(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
+			(tm.OR_ALTERNATIVES, args.number_of_alternatives)
+		)
+	)
 
 print("\nAccuracy over %d epochs:\n" % (args.epochs))
 for e in range(args.epochs):
