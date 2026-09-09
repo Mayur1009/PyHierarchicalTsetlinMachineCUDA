@@ -8,6 +8,7 @@ def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--epochs", default=100, type=int)
 	parser.add_argument("--number-of-clauses", default=2, type=int)
+	parser.add_argument("--number-of-state-bits", default=8, type=int)
 	parser.add_argument("--number-of-irrelevant-features", default=1, type=int)
 	parser.add_argument("--number-of-training-examples", default=10000, type=int)
 	parser.add_argument("--number-of-testing-examples", default=1000, type=int)
@@ -98,7 +99,7 @@ for i in range(10):
 			args.number_of_clauses,
 			args.T,
 			args.s,
-			number_of_state_bits=8,
+			number_of_state_bits=args.number_of_state_bits,
 			hierarchy_structure=(
 				(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
 				(tm.OR_ALTERNATIVES, args.number_of_alternatives),
@@ -110,7 +111,7 @@ for i in range(10):
 			args.number_of_clauses,
 			args.T,
 			args.s,
-			number_of_state_bits=8,
+			number_of_state_bits=args.number_of_state_bits,
 			boost_true_positive_feedback=0,
 			hierarchy_structure=(
 				(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
