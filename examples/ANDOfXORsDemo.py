@@ -6,15 +6,15 @@ import argparse
 
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
-	parser.add_argument("--epochs", default=1000, type=int)
+	parser.add_argument("--epochs", default=100, type=int)
 	parser.add_argument("--number-of-clauses", default=2, type=int)
 	parser.add_argument("--number-of-irrelevant-features", default=1, type=int)
-	parser.add_argument("--number-of-training-examples", default=50, type=int)
+	parser.add_argument("--number-of-training-examples", default=10000, type=int)
 	parser.add_argument("--number-of-testing-examples", default=1000, type=int)
-	parser.add_argument("--T", default=20, type=int)
+	parser.add_argument("--T", default=40, type=int)
 	parser.add_argument("--s", default=2.5, type=float)
 	parser.add_argument("--number-of-alternatives", default=10, type=int)
-	parser.add_argument("--number-of-ands", default=3, type=int)
+	parser.add_argument("--number-of-ands", default=4, type=int)
 	parser.add_argument("--noise", default=0.01, type=float)
 	parser.add_argument('--vanilla', action='store_true')
 
