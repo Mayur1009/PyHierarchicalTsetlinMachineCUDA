@@ -25,25 +25,69 @@ def default_args(**kwargs):
 
 args = default_args()
 
-X_train = np.zeros((args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
-Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
-for i in range(args.number_of_examples):
-	X_train[i, :] = np.random.randint(2, size=(args.number_of_ands*(2 + args.number_of_irrelevant_features)))
+and_factors = np.empty(args.number_of_ands, dtype=np.uint32)
 
-	Y_train[i] = 1
+X_train = np.random.randint(2, size=(args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
+Y_train = np.zeros(args.number_of_examples, dtype=np.uint32)
+
+for i in range(args.number_of_examples):
+	Y_train[i] = np.random.randint(2)
+	if Y_train[i] == 1:
+		and_factors[:] = 1
+		for j in range(args.number_of_ands):
+			if np.random.random() <= 0.5:
+				X_train[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2 ] = [0,1]
+			else:
+				X_train[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,0]
+	else:
+		number_of_true_factors = np.random.randint(args.number_of_ands)
+		and_factors[:] = 0
+		and_factors[:number_of_true_factors] = 1
+		np.random.shuffle(and_factors)
+
 	for j in range(args.number_of_ands):
-		Y_train[i] = np.logical_and(Y_train[i], np.logical_xor(X_train[i, j * (2 + args.number_of_irrelevant_features)], X_train[i, j * (2 + args.number_of_irrelevant_features) + 1]))
+		if and_factors[j]:
+			if np.random.random() <= 0.5:
+				X_train[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2 ] = [0,1]
+			else:
+				X_train[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,0]
+		else:
+			if np.random.random() <= 0.5:
+				X_train[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2 ] = [0,0]
+			else:
+				X_train[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,1]
 
 Y_train = np.where(np.random.rand(args.number_of_examples) <= args.noise, 1 - Y_train, Y_train)  # Adds noise
 
-X_test = np.zeros((args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
+X_test = np.random.randint(2, size=(args.number_of_examples, args.number_of_ands*(2 + args.number_of_irrelevant_features)), dtype=np.uint32)
 Y_test = np.zeros(args.number_of_examples, dtype=np.uint32)
-for i in range(args.number_of_examples):
-	X_test[i, :] = np.random.randint(2, size=(args.number_of_ands*(2 + args.number_of_irrelevant_features)))
 
-	Y_test[i] = 1
+for i in range(args.number_of_examples):
+	Y_test[i] = np.random.randint(2)
+	if Y_test[i] == 1:
+		and_factors[:] = 1
+		for j in range(args.number_of_ands):
+			if np.random.random() <= 0.5:
+				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2 ] = [0,1]
+			else:
+				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,0]
+	else:
+		number_of_true_factors = np.random.randint(args.number_of_ands)
+		and_factors[:] = 0
+		and_factors[:number_of_true_factors] = 1
+		np.random.shuffle(and_factors)
+
 	for j in range(args.number_of_ands):
-		Y_test[i] = np.logical_and(Y_test[i], np.logical_xor(X_test[i, j * (2 + args.number_of_irrelevant_features)], X_test[i, j * (2 + args.number_of_irrelevant_features) + 1]))
+		if and_factors[j]:
+			if np.random.random() <= 0.5:
+				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2 ] = [0,1]
+			else:
+				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,0]
+		else:
+			if np.random.random() <= 0.5:
+				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2 ] = [0,0]
+			else:
+				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,1]
 
 if not args.vanilla:
 	tm = MultiClassTsetlinMachine(
