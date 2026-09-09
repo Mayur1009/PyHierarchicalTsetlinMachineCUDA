@@ -115,8 +115,8 @@ else:
 		)
 	)
 
+average_result = 0
 for i in range(10):
-	print("\n#%d Training over %d epochs:\n" % (i+1, args.epochs))
 	for e in range(args.epochs):
 		start_training = time()
 		tm.fit(X_train, Y_train)
@@ -126,6 +126,10 @@ for i in range(10):
 	result = 100*(tm.predict(X_test) == Y_test).mean()
 	stop_testing = time()
 
+	average_result += result / 10.0
+
 	tm.print_hierarchy(print_ta_state=True)
 
 	print("\n#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (i+1, result, stop_training-start_training, stop_testing-start_testing))
+
+print("\nAverage Accuracy: %.2f%%" % (average_result,))
