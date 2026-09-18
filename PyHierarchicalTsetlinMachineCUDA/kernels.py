@@ -136,6 +136,7 @@ code_update = """
 				printf("CONSTANT UPDATE P\\n");
 				update_probability = 0.1;
 			#else
+				printf("VARIABLE UPDATE P\\n");
 				update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
 			#endif
 
