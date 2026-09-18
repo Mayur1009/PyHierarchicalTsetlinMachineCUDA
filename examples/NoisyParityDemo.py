@@ -11,7 +11,9 @@ def default_args(**kwargs):
 	parser.add_argument("--number-of-state-bits", default=7, type=int)
 	parser.add_argument("--T", default=250, type=int)
 	parser.add_argument("--s", default=25.0, type=float)
-	parser.add_argument("--number-of-alternatives-1", default=3, type=int)
+	parser.add_argument("--constant-update-p", default=0, type=float)
+	parser.add_argument('--binary-inference', action='store_true')
+	parser.add_argument("--number-of-alternatives-2", default=3, type=int)
 	parser.add_argument("--number-of-alternatives-2", default=3, type=int)
 	parser.add_argument('--vanilla', action='store_true')
 	parser.add_argument('--and-group-normalization', action='store_true')
@@ -34,9 +36,9 @@ Y_test = test_data[:,-1]
 
 seed = np.random.randint(10000)
 if args.vanilla:
-	tm = TsetlinMachine(args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 12), (tm.AND_GROUP, 1)))
+	tm = TsetlinMachine(args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2, args.T, args.s, binary_inference=args.binary_inference, constant_update_p=args.constant_update_p, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 12), (tm.AND_GROUP, 1)))
 else:
-	tm = TsetlinMachine(args.number_of_clauses, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
+	tm = TsetlinMachine(args.number_of_clauses, args.T, args.s, binary_inference=args.binary_inference, constant_update_p=args.constant_update_p, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
 
 f = open("statistics_%d_%d_%.2f_%d_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, seed), "w")
 
