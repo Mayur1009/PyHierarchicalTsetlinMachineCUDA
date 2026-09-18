@@ -94,8 +94,13 @@ code_update = """
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
 		
-			float absolute_prediction_error = fabsf(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			#if CONSTANT_UPDATE_PROBABILITY > 0
+				float update_probability = CONSTANT_UPDATE_PROBABILITY
+			#else
+				float update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
+			#endif
+
+			if (curand_uniform(localState) <= update_probability) {
 				if (target*sign > 0) {
 					if (clause_output && abs(*clause_weight) < INT_MAX) {
 						(*clause_weight) += sign;
@@ -124,8 +129,13 @@ code_update = """
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
 		
-			float absolute_prediction_error = fabsf(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			#if CONSTANT_UPDATE_PROBABILITY > 0
+				float update_probability = CONSTANT_UPDATE_PROBABILITY
+			#else
+				float update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
+			#endif
+
+			if (curand_uniform(localState) <= update_probability) {
 				if (target*sign > 0) {
 					// Type I Feedback
 					for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
@@ -390,7 +400,11 @@ code_update = """
 			for (int clause = index; clause < CLAUSES; clause += stride) {
 				if (clause_output[clause]) {
 					for (int class_id = 0; class_id < number_of_outputs; ++class_id) {
-						atomicAdd(&class_sum[class_id], (float) clause_weights[class_id*CLAUSES + clause] * clause_output[clause]);
+						#if BINARY_INFERENCE == 0
+							atomicAdd(&class_sum[class_id], (float) clause_weights[class_id*CLAUSES + clause] * clause_output[clause]);
+						#else
+							atomicAdd(&class_sum[class_id], (float) clause_weights[class_id*CLAUSES + clause]);
+						#endif
 					}	
 				}
 			}
