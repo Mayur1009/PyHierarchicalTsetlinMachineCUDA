@@ -32,12 +32,13 @@ test_data = np.loadtxt("./examples/NoisyParityTestingData.txt").astype(np.uint32
 X_test = test_data[:,0:-1]
 Y_test = test_data[:,-1]
 
+seed = np.random.randint(10000)
 if args.vanilla:
-	tm = TsetlinMachine(args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=np.random.randint(10000), number_of_state_bits=ars.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 12), (tm.AND_GROUP, 1)))
+	tm = TsetlinMachine(args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=ars.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 12), (tm.AND_GROUP, 1)))
 else:
-	tm = TsetlinMachine(args.number_of_clauses, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=np.random.randint(10000), number_of_state_bits=ars.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
+	tm = TsetlinMachine(args.number_of_clauses, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=ars.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
 
-f = open("statistics_%d_%d_%.2f_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla), "w")
+f = open("statistics_%d_%d_%.2f_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, seed), "w")
 
 print("\nAccuracy over %d epochs:\n" % (args.epochs,))
 for e in range(args.epochs):
