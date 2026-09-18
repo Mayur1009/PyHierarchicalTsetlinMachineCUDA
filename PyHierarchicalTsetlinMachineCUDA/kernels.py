@@ -94,11 +94,12 @@ code_update = """
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
 		
-			#if CONSTANT_UPDATE_P == 1
+			float update_probability;
+			#if CONSTANT_UPDATE_PROBABILITY == 1
 				printf("CONSTANT UPDATE P\\n");
-				float update_probability = 0.1
+				update_probability = 0.1;
 			#else
-				float update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
+				update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
 			#endif
 
 			if (curand_uniform(localState) <= update_probability) {
@@ -130,11 +131,12 @@ code_update = """
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
 		
+			float update_probability;
 			#if CONSTANT_UPDATE_PROBABILITY == 1
 				printf("CONSTANT UPDATE P\\n");
-				float update_probability = 0.1;
+				update_probability = 0.1;
 			#else
-				float update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
+				update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
 			#endif
 
 			if (curand_uniform(localState) <= update_probability) {
