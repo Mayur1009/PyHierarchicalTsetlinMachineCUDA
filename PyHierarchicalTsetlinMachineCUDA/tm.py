@@ -130,7 +130,7 @@ class CommonTsetlinMachine():
 	#define THRESHOLD %d
 	#define Q %f
 	#define BINARY_INFERENCE %d
-	#define CONSTANT_UPDATE_P %f
+	#define CONSTANT_UPDATE_P %d
 	#define AND_GROUP_NORMALIZATION %d
 
 	#define AND_GROUP %d
@@ -141,9 +141,7 @@ class CommonTsetlinMachine():
 	#define NEGATIVE_CLAUSES %d
 	#define FLIP_POLARITY %d
 		""" % (self.number_of_clauses, self.depth, self.hierarchy_size[1], self.number_of_ta_teams, self.number_of_literals_per_leaf, self.number_of_literal_chunks_per_leaf, self.number_of_literal_chunks, self.number_of_state_bits, self.boost_true_positive_feedback, self.s, self.T, self.q, self.binary_inference, self.constant_update_p, self.and_group_normalization, AND_GROUP, AND_ALTERNATIVES, OR_GROUP, OR_ALTERNATIVES, self.negative_clauses, self.flip_polarity)
-		
-		print(self.constant_update_p)
-		
+
 		mod_prepare = SourceModule(parameters + kernels.code_header + kernels.code_prepare, no_extern_c=True)
 		self.prepare_weights = mod_prepare.get_function("prepare_weights")
 		self.prepare_hierarchy = mod_prepare.get_function("prepare_hierarchy")
