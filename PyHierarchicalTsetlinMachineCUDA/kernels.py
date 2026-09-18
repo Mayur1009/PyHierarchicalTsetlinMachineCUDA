@@ -403,6 +403,7 @@ code_update = """
 						#if BINARY_INFERENCE == 0
 							atomicAdd(&class_sum[class_id], (float) clause_weights[class_id*CLAUSES + clause] * clause_output[clause]);
 						#else
+							printf("Binary\\n");
 							atomicAdd(&class_sum[class_id], (float) clause_weights[class_id*CLAUSES + clause]);
 						#endif
 					}	
