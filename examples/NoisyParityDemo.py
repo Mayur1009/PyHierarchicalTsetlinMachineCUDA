@@ -2,10 +2,27 @@ from PyHierarchicalTsetlinMachineCUDA.tm import TsetlinMachine
 import numpy as np
 from time import time
 import PyHierarchicalTsetlinMachineCUDA.tm as tm
+import argparse
 
-clauses = 32
-s = 25.0
-T = 250
+def default_args(**kwargs):
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--epochs", default=5000, type=int)
+	parser.add_argument("--number-of-clauses", default=32, type=int)
+	parser.add_argument("--number-of-state-bits", default=7, type=int)
+	parser.add_argument("--T", default=250, type=int)
+	parser.add_argument("--s", default=25.0, type=float)
+	parser.add_argument("--number-of-alternatives-1", default=3, type=int)
+	parser.add_argument("--number-of-alternatives-2", default=3, type=int)
+	parser.add_argument('--vanilla', action='store_true')
+	parser.add_argument('--and-group-normalization', action='store_true')
+
+	args = parser.parse_args()
+	for key, value in kwargs.items():
+		if key in args.__dict__:
+			setattr(args, key, value)
+	return args
+
+args = default_args()
 
 train_data = np.loadtxt("./examples/NoisyParityTrainingData.txt").astype(np.uint32)
 X_train = train_data[:,0:-1]
@@ -15,10 +32,15 @@ test_data = np.loadtxt("./examples/NoisyParityTestingData.txt").astype(np.uint32
 X_test = test_data[:,0:-1]
 Y_test = test_data[:,-1]
 
-tm = TsetlinMachine(clauses, T, s, number_of_state_bits=8, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, 3), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, 3), (tm.AND_GROUP, 2)))
+if args.vanilla:
+	tm = TsetlinMachine(args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=np.random.randint(10000), number_of_state_bits=ars.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 12), (tm.AND_GROUP, 1)))
+else:
+	tm = TsetlinMachine(args.number_of_clauses, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=np.random.randint(10000), number_of_state_bits=ars.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
 
-print("\nAccuracy over 1000 epochs:\n")
-for e in range(1000):
+f = open("statistics_%d_%d_%.2f_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla), "w")
+
+print("\nAccuracy over %d epochs:\n" % (args.epochs,))
+for e in range(args.epochs):
 	start_training = time()
 	tm.fit(X_train, Y_train)
 	stop_training = time()
@@ -30,3 +52,7 @@ for e in range(1000):
 	tm.print_hierarchy()
 
 	print("\n#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (e+1, result, stop_training-start_training, stop_testing-start_testing))
+
+	f.write("%d %.2f\n", e, result)
+
+f.close()
