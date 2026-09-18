@@ -13,7 +13,7 @@ def default_args(**kwargs):
 	parser.add_argument("--s", default=25.0, type=float)
 	parser.add_argument("--constant-update-p", default=0, type=float)
 	parser.add_argument('--binary-inference', action='store_true')
-	parser.add_argument("--number-of-alternatives-2", default=3, type=int)
+	parser.add_argument("--number-of-alternatives-1", default=3, type=int)
 	parser.add_argument("--number-of-alternatives-2", default=3, type=int)
 	parser.add_argument('--vanilla', action='store_true')
 	parser.add_argument('--and-group-normalization', action='store_true')
