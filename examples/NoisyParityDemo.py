@@ -54,6 +54,6 @@ for e in range(args.epochs):
 
 	print("\n#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (e+1, result, stop_training-start_training, stop_testing-start_testing))
 
-	f.write("%d %.2f\n", % (e, result))
+	f.write("%d %.2f\n" % (e, result))
 
 f.close()
