@@ -131,6 +131,7 @@ code_update = """
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
 		
 			#if CONSTANT_UPDATE_PROBABILITY > 0
+				printf("CONSTANT UPDATE P\\n");
 				float update_probability = CONSTANT_UPDATE_PROBABILITY
 			#else
 				float update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
