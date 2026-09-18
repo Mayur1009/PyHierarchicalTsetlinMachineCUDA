@@ -38,7 +38,7 @@ if args.vanilla:
 else:
 	tm = TsetlinMachine(args.number_of_clauses, args.T, args.s, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
 
-f = open("statistics_%d_%d_%.2f_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, seed), "w")
+f = open("statistics_%d_%d_%.2f_%d_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, seed), "w")
 
 print("\nAccuracy over %d epochs:\n" % (args.epochs,))
 for e in range(args.epochs):
@@ -54,6 +54,6 @@ for e in range(args.epochs):
 
 	print("\n#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (e+1, result, stop_training-start_training, stop_testing-start_testing))
 
-	f.write("%d %.2f\n", e, result)
+	f.write("%d %.2f\n", % (e, result))
 
 f.close()
