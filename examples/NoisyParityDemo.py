@@ -37,7 +37,6 @@ Y_test = test_data[:,-1]
 
 f = open("statistics_%d_%d_%.2f_%d_%d_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference), "w")
 
-print("\nAccuracy over %d epochs:\n" % (args.epochs,))
 
 for r in range(args.runs):
 	seed = np.random.randint(10000)
@@ -46,13 +45,15 @@ for r in range(args.runs):
 	else:
 		tsetlin_machine = TsetlinMachine(args.number_of_clauses, args.T, args.s, binary_inference=args.binary_inference, constant_update_p=args.constant_update_p, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
 
+	print("\nAccuracy over %d epochs:\n" % (args.epochs,))
+
 	for e in range(args.epochs):
 		start_training = time()
-		tsetlin_machine .fit(X_train, Y_train)
+		tsetlin_machine.fit(X_train, Y_train)
 		stop_training = time()
 
 		start_testing = time()
-		result = 100*(tm.predict(X_test) == Y_test).mean()
+		result = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
 		stop_testing = time()
 
 		tsetlin_machine.print_hierarchy()
