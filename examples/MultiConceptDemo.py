@@ -15,6 +15,11 @@ def default_args(**kwargs):
 	parser.add_argument("--number-of-elements", default=16, type=int)
 	parser.add_argument("--number-of-copies", default=2, type=int)
 	parser.add_argument("--noise", default=0.0, type=float)
+	parser.add_argument("--constant-update-p", action='store_true')
+	parser.add_argument('--binary-inference', action='store_true')
+	parser.add_argument('--vanilla', action='store_true')
+	parser.add_argument('--and-group-normalization', action='store_true')
+
 	args = parser.parse_args()
 	for key, value in kwargs.items():
 		if key in args.__dict__:
@@ -47,30 +52,75 @@ for i in range(args.number_of_examples):
 
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
-tm = MultiClassTsetlinMachine(
-	args.number_of_clauses,
-	args.T,
-	args.s,
-	number_of_state_bits=8,
-	boost_true_positive_feedback=0,
-	hierarchy_structure=(
-		(tm.AND_GROUP, features),
-		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
-		(tm.AND_ALTERNATIVES, args.number_of_copies)
-	),
-	append_negated=False
-)
+# tm = MultiClassTsetlinMachine(
+# 	args.number_of_clauses,
+# 	args.T,
+# 	args.s,
+# 	number_of_state_bits=8,
+# 	boost_true_positive_feedback=0,
+# 	hierarchy_structure=(
+# 		(tm.AND_GROUP, features),
+# 		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+# 		(tm.AND_ALTERNATIVES, args.number_of_copies)
+# 	),
+# 	append_negated=False
+# )
 
-print("\nAccuracy over %d epochs:\n" % (args.epochs))
-for e in range(args.epochs):
-	start_training = time()
-	tm.fit(X_train, Y_train)
-	stop_training = time()
+f = open("multi_concept_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_elements, args.noise), "w")
 
-	start_testing = time()
-	result = 100*(tm.predict(X_test) == Y_test).mean()
-	stop_testing = time()
+for r in range(args.runs):
+	seed = np.random.randint(10000)
+	if args.vanilla:
+		tsetlin_machine = TsetlinMachine(
+			args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2,
+			args.T,
+			args.s,
+			binary_inference=args.binary_inference,
+			constant_update_p=args.constant_update_p,
+			and_group_normalization=args.and_group_normalization,
+			seed=seed,
+			number_of_state_bits=args.number_of_state_bits,
+			boost_true_positive_feedback=0,
+			append_negated=False,
+			hierarchy_structure=(
+				(tm.AND_GROUP, features),
+				(tm.AND_GROUP, 1)
+			)
+		)
+	else:
+		tsetlin_machine = TsetlinMachine(
+			args.number_of_clauses,
+			args.T,
+			args.s,
+			binary_inference=args.binary_inference,
+			constant_update_p=args.constant_update_p,
+			and_group_normalization=args.and_group_normalization,
+			seed=seed,
+			number_of_state_bits=args.number_of_state_bits,
+			boost_true_positive_feedback=0,
+			append_negated=False,
+			hierarchy_structure=(
+				(tm.AND_GROUP, features),
+				(tm.OR_ALTERNATIVES, args.number_of_alternatives),
+				(tm.AND_ALTERNATIVES, args.number_of_copies)
+			)
+		)
 
-	tm.print_hierarchy()
+	print("\nAccuracy over %d epochs:\n" % (args.epochs,))
 
-	print("\n#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (e+1, result, stop_training-start_training, stop_testing-start_testing))
+	for e in range(args.epochs):
+		start_training = time()
+		tsetlin_machine.fit(X_train, Y_train)
+		stop_training = time()
+
+		start_testing = time()
+		result = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
+		stop_testing = time()
+
+		tsetlin_machine.print_hierarchy()
+
+		print("\n#%d/%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (r+1, e+1, result, stop_training-start_training, stop_testing-start_testing))
+
+		f.write("%d %d %.2f\n" % (r, e, result))
+		f.flush()
+f.close()
