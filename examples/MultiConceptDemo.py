@@ -73,7 +73,7 @@ f = open("multi_concept_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f.txt" % (
 for r in range(args.runs):
 	seed = np.random.randint(10000)
 	if args.vanilla:
-		tsetlin_machine = TsetlinMachine(
+		tsetlin_machine = MultiClassTsetlinMachine(
 			args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2,
 			args.T,
 			args.s,
@@ -90,7 +90,7 @@ for r in range(args.runs):
 			)
 		)
 	else:
-		tsetlin_machine = TsetlinMachine(
+		tsetlin_machine = MultiClassTsetlinMachine(
 			args.number_of_clauses,
 			args.T,
 			args.s,
