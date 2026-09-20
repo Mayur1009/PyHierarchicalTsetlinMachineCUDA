@@ -74,7 +74,7 @@ for r in range(args.runs):
 	seed = np.random.randint(10000)
 	if args.vanilla:
 		tsetlin_machine = MultiClassTsetlinMachine(
-			args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2,
+			args.number_of_clauses * args.number_of_alternatives * args.number_of_copies,
 			args.T,
 			args.s,
 			binary_inference=args.binary_inference,
