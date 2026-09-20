@@ -7,6 +7,7 @@ import argparse
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--epochs", default=1000, type=int)
+	parser.add_argument("--runs", default=10, type=int)
 	parser.add_argument("--number-of-clauses", default=2, type=int)
 	parser.add_argument("--number-of-state-bits", default=7, type=int)
 	parser.add_argument("--number-of-examples", default=10000, type=int)
