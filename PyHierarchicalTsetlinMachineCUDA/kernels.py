@@ -94,8 +94,14 @@ code_update = """
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
 		
-			float absolute_prediction_error = fabsf(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			float update_probability;
+			#if CONSTANT_UPDATE_P == 1
+				update_probability = 1.0;
+			#else
+				update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
+			#endif
+
+			if (curand_uniform(localState) <= update_probability) {
 				if (target*sign > 0) {
 					if (clause_output && abs(*clause_weight) < INT_MAX) {
 						(*clause_weight) += sign;
@@ -124,8 +130,14 @@ code_update = """
 
 			int sign = (*clause_weight >= 0) - (*clause_weight < 0);
 		
-			float absolute_prediction_error = fabsf(y - class_sum);
-			if (curand_uniform(localState) <= 1.0*absolute_prediction_error/(2*THRESHOLD)) {
+			float update_probability;
+			#if CONSTANT_UPDATE_P == 1
+				update_probability = 1.0;
+			#else
+				update_probability = fabsf(y - class_sum)/(2*THRESHOLD);
+			#endif
+
+			if (curand_uniform(localState) <= update_probability) {
 				if (target*sign > 0) {
 					// Type I Feedback
 					for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF; ++ta_chunk) {
@@ -199,31 +211,19 @@ code_update = """
 
 				// Evaluate clause component
 
-				#if LOG_SCALE == 1
-					float component_output = 0;
-				#else
-					float component_output = 1;
-				#endif
+				float component_output = 1;
 
 				for (int ta_chunk = 0; ta_chunk < TA_CHUNKS_PER_LEAF-1; ++ta_chunk) {
 					// Compare the TA state of the component (leaf) against the corresponding part of the feature vector
 					if ((ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1] & Xi[feature_chunk_base + ta_chunk]) != ta_state[ta_chunk*STATE_BITS + STATE_BITS - 1]) {
-						#if LOG_SCALE == 1
-							component_output = NEG_INFINITY;
-						#else
-							component_output = 0;
-						#endif
+						component_output = 0;
 							
 						break;
 					}
 				}
 
 				if ((ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & Xi[feature_chunk_base + TA_CHUNKS_PER_LEAF-1] & FILTER_HIERARCHICAL) != (ta_state[(TA_CHUNKS_PER_LEAF-1)*STATE_BITS + STATE_BITS - 1] & FILTER_HIERARCHICAL)) {
-					#if LOG_SCALE == 1
-						component_output = NEG_INFINITY;
-					#else
-						component_output = 0;
-					#endif
+					component_output = 0;
 				}
 
 				global_component_output[clause_component] = component_output;
@@ -262,17 +262,12 @@ code_update = """
 			for (int and_group_node = index; and_group_node < CLAUSES*number_of_and_group_nodes; and_group_node += stride) {
 				// Multiply and factors
 
-				#if LOG_SCALE == 1
-					float and_group_vote_product = 0;
-				#else
-					float and_group_vote_product = 1;
-				#endif
-
+				float and_group_vote_product = 1;
 				for (int and_factor = 0; and_factor < number_of_and_group_factors; ++and_factor) {
 					// Aggregate votes from each child node through multiplication
 					
-					#if LOG_SCALE == 1
-				 		and_group_vote_product += child_input[and_group_node*number_of_and_group_factors + and_factor];
+					#if AND_GROUP_NORMALIZATION == 1
+						and_group_vote_product *= powf(child_input[and_group_node*number_of_and_group_factors + and_factor], 1.0/number_of_and_group_factors);
 				 	#else
 				 		and_group_vote_product *= child_input[and_group_node*number_of_and_group_factors + and_factor];
 				 	#endif	
@@ -289,24 +284,14 @@ code_update = """
 			int stride = blockDim.x * gridDim.x;
 
 			// If a group node is false, all children are made false.
-			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
-				#if LOG_SCALE == 1
-					if (group_node_output[group_node] == NEG_INFINITY) {
-						for (int and_factor = 0; and_factor < number_of_group_node_children; ++and_factor) {
-							if (child_input[group_node*number_of_group_node_children + and_factor] >= 0) {
-								child_input[group_node*number_of_group_node_children + and_factor] = NEG_INFINITY;	
-							}
-						}
-					}		
-				#else
-					if (group_node_output[group_node] == 0) {
-						for (int and_factor = 0; and_factor < number_of_group_node_children; ++and_factor) {
-							if (child_input[group_node*number_of_group_node_children + and_factor] > 0) {
-								child_input[group_node*number_of_group_node_children + and_factor] = 0;	
-							}
+			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {			
+				if (group_node_output[group_node] == 0) {
+					for (int and_factor = 0; and_factor < number_of_group_node_children; ++and_factor) {
+						if (child_input[group_node*number_of_group_node_children + and_factor] > 0) {
+							child_input[group_node*number_of_group_node_children + and_factor] = 0;	
 						}
 					}
-				#endif
+				}
 
 				if (group_node_output[group_node] == -1) {
 					for (int and_factor = 0; and_factor < number_of_group_node_children; ++and_factor) {
@@ -328,45 +313,24 @@ code_update = """
 
 			// If a group node is false, all children are made false.
 			for (int group_node = index; group_node < CLAUSES*number_of_group_nodes; group_node += stride) {
-				#if LOG_SCALE == 1
-					if (group_node_output[group_node] == -1) {
-						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							child_input[group_node*number_of_group_node_children + or_addend] = -1;	
-						}
-					}  else if (group_node_output[group_node] == NEG_INFINITY) {
-						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							if (child_input[group_node*number_of_group_node_children + or_addend] >= 0) {
-								child_input[group_node*number_of_group_node_children + or_addend] = NEG_INFINITY;	
-							}
-						}
-					} else {
-						child_input_sum = 0;
-						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							if (child_input[group_node*number_of_group_node_children + or_addend] >= 0) {
-								child_input_sum += np.exp2f(child_input[group_node*number_of_group_node_children + or_addend]); // Needs normalization
-							}
+				if (group_node_output[group_node] == -1) {
+					for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
+						child_input[group_node*number_of_group_node_children + or_addend] = -1;	
+					}
+				}  else if (group_node_output[group_node] == 0) {
+					for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
+						if (child_input[group_node*number_of_group_node_children + or_addend] > 0) {
+							child_input[group_node*number_of_group_node_children + or_addend] = 0;	
 						}
 					}
-				#else
-					if (group_node_output[group_node] == -1) {
-						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							child_input[group_node*number_of_group_node_children + or_addend] = -1;	
-						}
-					}  else if (group_node_output[group_node] == 0) {
-						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							if (child_input[group_node*number_of_group_node_children + or_addend] > 0) {
-								child_input[group_node*number_of_group_node_children + or_addend] = 0;	
-							}
-						}
-					} else {
-						child_input_sum = 0;
-						for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
-							if (child_input[group_node*number_of_group_node_children + or_addend] > 0) {
-								child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
-							}
+				} else {
+					child_input_sum = 0;
+					for (int or_addend = 0; or_addend < number_of_group_node_children; ++or_addend) {
+						if (child_input[group_node*number_of_group_node_children + or_addend] > 0) {
+							child_input_sum += child_input[group_node*number_of_group_node_children + or_addend];
 						}
 					}
-				#endif
+				}
 
 				// Skip node if "turned off" (-1)
 				if (group_node_output[group_node] != -1) {
@@ -405,39 +369,15 @@ code_update = """
 
 			// Add up the votes from the children of each OR node
 			for (int or_alternatives_node = index; or_alternatives_node < CLAUSES*number_of_or_alternatives_nodes; or_alternatives_node += stride) {
-				#if LOG_SCALE == 1
-					float or_alternatives_vote_max = NEG_INFINITY;
-					for (int or_alternative = 0; or_alternative < number_of_or_alternatives; ++or_alternative) {
-						if (child_input[or_alternatives_node * number_of_or_alternatives + or_alternative] > or_alternatives_vote_max) {
-							or_alternatives_vote_max = child_input[or_alternatives_node * number_of_or_alternatives + or_alternative];
-						}
-					}
+				// Sum up votes from each or alternative
+				int or_alternatives_vote_sum = 0;
+				for (int or_alternative = 0; or_alternative < number_of_or_alternatives; ++or_alternative) {
+					// Aggregate same input or alternatives through summation						
+					or_alternatives_vote_sum += child_input[or_alternatives_node * number_of_or_alternatives + or_alternative];
+				}
 
-					if (or_alternatives_vote_max != NEG_INFINITY) {
-						// Sum up votes from each or alternative
-						float or_alternatives_vote_sum = 0;
-						for (int or_alternative = 0; or_alternative < number_of_or_alternatives; ++or_alternative) {
-							// Aggregates or alternatives through summation
-							
-							or_alternatives_vote_sum += exp2f(child_input[or_alternatives_node * number_of_or_alternatives + or_alternative] - or_alternatives_vote_max);
-						}
-
-						// Store vote sum as node output
-						or_alternatives_node_output[or_alternatives_node] = or_alternatives_vote_max + log2f(or_alternatives_vote_sum);
-					} else {
-						or_alternatives_node_output[or_alternatives_node] = NEG_INFINITY;
-					}
-				#else
-					// Sum up votes from each or alternative
-					int or_alternatives_vote_sum = 0;
-					for (int or_alternative = 0; or_alternative < number_of_or_alternatives; ++or_alternative) {
-						// Aggregate same input or alternatives through summation						
-						or_alternatives_vote_sum += child_input[or_alternatives_node * number_of_or_alternatives + or_alternative];
-					}
-
-					// Store vote sum as node output
-					or_alternatives_node_output[or_alternatives_node] = or_alternatives_vote_sum;
-				#endif
+				// Store vote sum as node output
+				or_alternatives_node_output[or_alternatives_node] = or_alternatives_vote_sum;
 			}
 		}
 
@@ -458,41 +398,18 @@ code_update = """
 			int stride = blockDim.x * gridDim.x;
 
 			// Add up the votes from each clause
-			#if LOG_SCALE == 1
-				// Add up the votes from each clause
-				for (int class_id = index; class_id < number_of_outputs; class_id += stride) {
-					float clause_output_max = NEG_INFINITY;
-					for (int clause = 0; clause < CLAUSES; ++clause) {
-						if (clause_output[clause] > clause_output_max) {
-							clause_output_max = clause_output[clause];
-						}
-					}
 
-					if (clause_output_max != NEG_INFINITY) {
-						float weighted_clause_output_sum = 0;
-						for (int clause = 0; clause < CLAUSES; ++clause) {
-							weighted_clause_output_sum += clause_weights[class_id*CLAUSES + clause] * exp2f(clause_output[clause] - clause_output_max);
-						}
-
-						if (log2f(fabs(weighted_clause_output_sum)) + clause_output_max >= log2f(THRESHOLD)) {
-							float sign = (1 - 2 * (weighted_clause_output_sum < 0));
-							class_sum[class_id] = sign*THRESHOLD;
-						} else {
-							class_sum[class_id] = weighted_clause_output_sum * exp2f(clause_output_max);
-						}
-					} else {
-						class_sum[class_id] = 0;
-					}
-				}
-			#else
-				for (int clause = index; clause < CLAUSES; clause += stride) {
-					if (clause_output[clause]) {
-						for (int class_id = 0; class_id < number_of_outputs; ++class_id) {
+			for (int clause = index; clause < CLAUSES; clause += stride) {
+				if (clause_output[clause]) {
+					for (int class_id = 0; class_id < number_of_outputs; ++class_id) {
+						#if BINARY_INFERENCE == 0
 							atomicAdd(&class_sum[class_id], (float) clause_weights[class_id*CLAUSES + clause] * clause_output[clause]);
-						}	
-					}
+						#else
+							atomicAdd(&class_sum[class_id], (float) clause_weights[class_id*CLAUSES + clause]);
+						#endif
+					}	
 				}
-			#endif
+			}
 		}
 
 		__global__ void rescale_final(int number_of_outputs, float *clause_output_max, float *class_sum)
@@ -571,11 +488,7 @@ code_update = """
 						local_class_sum = -THRESHOLD;
 					}
 
-					#if LOG_SCALE == 1
-						update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component] != NEG_INFINITY, &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
-					#else
-						update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component] > 0, &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
-					#endif
+					update_component_hierarchy(&localState, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], ta_state, component_output[clause_component] > 0, &Xi[feature_chunk_base], y[example*number_of_outputs + class_id], local_class_sum);
 				}
 			}
 		
@@ -600,11 +513,7 @@ code_update = """
 						local_class_sum = -THRESHOLD;
 					}
 
-					#if LOG_SCALE == 1
-						update_clause_weight(&localState, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause] != NEG_INFINITY, y[example*number_of_outputs + class_id], local_class_sum);
-					#else
-						update_clause_weight(&localState, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause] > 0, y[example*number_of_outputs + class_id], local_class_sum);
-					#endif
+					update_clause_weight(&localState, tm_type, number_of_outputs, &clause_weights[class_id*CLAUSES + clause], clause_output[clause] > 0, y[example*number_of_outputs + class_id], local_class_sum);
 				}
 			}
 		
