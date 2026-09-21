@@ -78,9 +78,9 @@ for r in range(args.runs):
 
     print("\nAccuracy over %d epochs:\n" % (args.epochs))
     for e in range(args.epochs):
-    	start_training = time()
-    	for b in range(10):
-    		tsetlin_machine.fit(X_train[b*len(Y_train)//10:(b+1)*len(Y_train)//10], Y_train[b*len(Y_train)//10:(b+1)*len(Y_train)//10])
+        start_training = time()
+        for b in range(10):
+            tsetlin_machine.fit(X_train[b*len(Y_train)//10:(b+1)*len(Y_train)//10], Y_train[b*len(Y_train)//10:(b+1)*len(Y_train)//10])
         stop_training = time()
 
         start_testing = time()
