@@ -14,7 +14,11 @@ def default_args(**kwargs):
     parser.add_argument("--boost", default=1, type=int)
     parser.add_argument("--number_of_state_bits", default=7, type=int)
     parser.add_argument("--or_alternatives", default=60, type=int)
-  
+    parser.add_argument("--constant-update-p", action='store_true')
+    parser.add_argument('--binary-inference', action='store_true')
+    parser.add_argument('--vanilla', action='store_true')
+    parser.add_argument('--and-group-normalization', action='store_true')
+
     args = parser.parse_args()
     for key, value in kwargs.items():
         if key in args.__dict__:
@@ -30,7 +34,22 @@ Y_train = data[:int(len(data)*0.8),-1]
 X_test = data[int(len(data)*0.8):,0:-1]
 Y_test = data[int(len(data)*0.8):,-1]
 
-tsetlin_machine = TsetlinMachine(args.clauses, args.T, args.s, weighted_clauses=False, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=args.boost, hierarchy_structure=((tm.AND_GROUP, 72), (tm.OR_ALTERNATIVES, args.or_alternatives), (tm.AND_GROUP, 4)))
+tsetlin_machine = TsetlinMachine(
+    args.clauses,
+    args.T,
+    args.s,
+    weighted_clauses=False,
+    number_of_state_bits=args.number_of_state_bits,
+    boost_true_positive_feedback=args.boost,
+    binary_inference=args.binary_inference,
+    constant_update_p=args.constant_update_p,
+    and_group_normalization=args.and_group_normalization,
+    hierarchy_structure=(
+        (tm.AND_GROUP, 72),
+        (tm.OR_ALTERNATIVES, args.or_alternatives),
+        (tm.AND_GROUP, 4)
+    )
+)
 
 print("\nAccuracy over %d epochs:\n" % (args.epochs))
 for e in range(args.epochs):
