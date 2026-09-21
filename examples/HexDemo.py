@@ -81,13 +81,13 @@ for r in range(args.runs):
     	start_training = time()
     	for b in range(10):
     		tsetlin_machine.fit(X_train[b*len(Y_train)//10:(b+1)*len(Y_train)//10], Y_train[b*len(Y_train)//10:(b+1)*len(Y_train)//10])
-    	stop_training = time()
+        stop_training = time()
 
-    	start_testing = time()
-    	result_testing = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
-    	stop_testing = time()
+        start_testing = time()
+        result_testing = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
+        stop_testing = time()
 
-    	#result_training = 100*(tsetlin_machine.predict(X_train) == Y_train).mean()
+        #result_training = 100*(tsetlin_machine.predict(X_train) == Y_train).mean()
 
         print("#%d/%d Testing Accuracy: %.2f%% Training Time: %.2fs Testing Time: %.2fs" % (r+1, e+1, result_testing, stop_training-start_training, stop_testing-start_testing))
         f.write("%d %d %.2f\n" % (r, e, result_testing))
