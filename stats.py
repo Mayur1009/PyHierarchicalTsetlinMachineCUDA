@@ -3,9 +3,7 @@ import sys
 
 m = np.loadtxt(sys.argv[1])
 
-print(m)
-
-runs = int(m[:,0])
+runs = int(m[:,0].max())
 
 for run in range(int(runs)):
 	print(m[m[:,0]==run][:,3].max())
