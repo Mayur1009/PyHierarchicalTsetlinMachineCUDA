@@ -6,4 +6,4 @@ m = np.loadtxt(sys.argv[1])
 runs = int(m[:,0].max())
 
 for run in range(int(runs)):
-	print(m[m[:,0]==run][:,3].max())
+	print(m[m[:,0]==run][:,2].max())
