@@ -89,7 +89,7 @@ for r in range(args.runs):
 
     	#result_training = 100*(tsetlin_machine.predict(X_train) == Y_train).mean()
 
-    	print("#%d/%d Testing Accuracy: %.2f%% Training Time: %.2fs Testing Time: %.2fs" % (r+1, e+1, result_testing, stop_training-start_training, stop_testing-start_testing))
+        print("#%d/%d Testing Accuracy: %.2f%% Training Time: %.2fs Testing Time: %.2fs" % (r+1, e+1, result_testing, stop_training-start_training, stop_testing-start_testing))
         f.write("%d %d %.2f\n" % (r, e, result_testing))
         f.flush()
 
