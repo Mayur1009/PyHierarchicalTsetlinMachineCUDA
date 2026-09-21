@@ -3,7 +3,7 @@ import sys
 
 m = np.loadtxt(sys.argv[1])
 
-runs = int(m[:,0].max())
+runs = int(m[:,0].max())+1
 
 for run in range(int(runs)):
 	i = m[m[:,0]==run][:,2].argmax()
