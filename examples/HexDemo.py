@@ -8,7 +8,7 @@ def default_args(**kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument("--epochs", default=1000, type=int)
     parser.add_argument("--runs", default=1000, type=int)
-    parser.add_argument("--clauses", default=2000, type=int)
+    parser.add_argument("--number-of-clauses", default=2000, type=int)
     parser.add_argument("--T", default=9000, type=int)
     parser.add_argument("--s", default=44.0, type=float)
     parser.add_argument("--q", default=1.0, type=float)
