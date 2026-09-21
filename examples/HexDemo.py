@@ -42,7 +42,7 @@ for r in range(args.runs):
 
     if args.vanilla:
         tsetlin_machine = TsetlinMachine(
-            args.clauses * args.number_of_alternatives,
+            args.number_of_clauses * args.number_of_alternatives,
             args.T,
             args.s,
             weighted_clauses=False,
@@ -59,7 +59,7 @@ for r in range(args.runs):
         )
     else:
         tsetlin_machine = TsetlinMachine(
-            args.clauses,
+            args.number_of_clauses,
             args.T,
             args.s,
             weighted_clauses=False,
