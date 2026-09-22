@@ -98,7 +98,7 @@ for i in range(args.number_of_testing_examples):
 
 f = open("and_of_xors_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_irrelevant_features, args.noise, args.number_of_ands), "w")
 
-for i in range(args.runs):
+for r in range(args.runs):
 	if not args.vanilla:
 		tsetlin_machine = TsetlinMachine(
 			args.number_of_clauses,
