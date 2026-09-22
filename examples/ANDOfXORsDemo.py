@@ -7,6 +7,7 @@ import argparse
 def default_args(**kwargs):
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--epochs", default=100, type=int)
+	parser.add_argument("--runs", default=10, type=int)
 	parser.add_argument("--number-of-clauses", default=2, type=int)
 	parser.add_argument("--number-of-state-bits", default=8, type=int)
 	parser.add_argument("--number-of-irrelevant-features", default=1, type=int)
@@ -17,7 +18,10 @@ def default_args(**kwargs):
 	parser.add_argument("--number-of-alternatives", default=10, type=int)
 	parser.add_argument("--number-of-ands", default=4, type=int)
 	parser.add_argument("--noise", default=0.01, type=float)
+	parser.add_argument("--constant-update-p", action='store_true')
+	parser.add_argument('--binary-inference', action='store_true')
 	parser.add_argument('--vanilla', action='store_true')
+	parser.add_argument('--and-group-normalization', action='store_true')
 
 	args = parser.parse_args()
 	for key, value in kwargs.items():
@@ -92,13 +96,17 @@ for i in range(args.number_of_testing_examples):
 				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,1]
 
 
-average_result = 0
-for i in range(10):
+f = open("and_of_xors_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_irrelevant_features, args.noise, args.number_of_ands), "w")
+
+for i in range(args.runs):
 	if not args.vanilla:
 		tsetlin_machine = TsetlinMachine(
 			args.number_of_clauses,
 			args.T,
 			args.s,
+			binary_inference=args.binary_inference,
+			constant_update_p=args.constant_update_p,
+			and_group_normalization=args.and_group_normalization,
 			number_of_state_bits=args.number_of_state_bits,
 			boost_true_positive_feedback=0,
 			hierarchy_structure=(
@@ -113,6 +121,9 @@ for i in range(10):
 			args.number_of_clauses,
 			args.T,
 			args.s,
+			binary_inference=args.binary_inference,
+			constant_update_p=args.constant_update_p,
+			and_group_normalization=args.and_group_normalization,
 			number_of_state_bits=args.number_of_state_bits,
 			boost_true_positive_feedback=0,
 			hierarchy_structure=(
@@ -122,19 +133,20 @@ for i in range(10):
 			seed=np.random.randint(np.iinfo(np.int32).max)
 		)
 
-	start_training = time()
 	for e in range(args.epochs):
+		start_training = time()
 		tsetlin_machine.fit(X_train, Y_train)
-	stop_training = time()
+		stop_training = time()
 
-	start_testing = time()
-	result = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
-	stop_testing = time()
+		start_testing = time()
+		result = 100*(tsetlin_machine.predict(X_test) == Y_test).mean()
+		stop_testing = time()
 
-	average_result += result / 10.0
+		print("\n#%d/%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (r+1, e+1, result, stop_training-start_training, stop_testing-start_testing))
+
+		f.write("%d %d %.2f\n" % (r, e, result))
+		f.flush()
 
 	tsetlin_machine.print_hierarchy(print_ta_state=True)
 
-	print("\n#%d Accuracy: %.2f%% Training: %.2fs Testing: %.2fs" % (i+1, result, stop_training-start_training, stop_testing-start_testing))
-
-print("\nAverage Accuracy: %.2f%%" % (average_result,))
+f.close()

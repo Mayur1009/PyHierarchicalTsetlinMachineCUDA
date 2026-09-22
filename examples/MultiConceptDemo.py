@@ -54,20 +54,6 @@ for i in range(args.number_of_examples):
 
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
-# tm = MultiClassTsetlinMachine(
-# 	args.number_of_clauses,
-# 	args.T,
-# 	args.s,
-# 	number_of_state_bits=8,
-# 	boost_true_positive_feedback=0,
-# 	hierarchy_structure=(
-# 		(tm.AND_GROUP, features),
-# 		(tm.OR_ALTERNATIVES, args.number_of_alternatives),
-# 		(tm.AND_ALTERNATIVES, args.number_of_copies)
-# 	),
-# 	append_negated=False
-# )
-
 f = open("multi_concept_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_elements, args.noise), "w")
 
 for r in range(args.runs):
