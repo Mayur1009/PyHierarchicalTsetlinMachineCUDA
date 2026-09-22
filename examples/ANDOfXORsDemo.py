@@ -102,7 +102,7 @@ f = open("and_of_xors_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f_%d_%d.txt"
 for r in range(args.runs):
 	if not args.vanilla:
 		tsetlin_machine = TsetlinMachine(
-			args.number_of_clauses * number_of_alternatives,
+			args.number_of_clauses * args.number_of_alternatives,
 			args.T,
 			args.s,
 			binary_inference=args.binary_inference,
