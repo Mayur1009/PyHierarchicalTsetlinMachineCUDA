@@ -44,12 +44,13 @@ COALESCED_TM = 2
 
 class CommonTsetlinMachine():
 
-	def __init__(self, number_of_clauses, T, s, q=1.0, constant_update_p=0, binary_inference=False, and_group_normalization=False, hierarchy_structure=None, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(self, number_of_clauses, T, s, q=1.0, clip_T=False, constant_update_p=0, binary_inference=False, and_group_normalization=False, hierarchy_structure=None, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
 		self.number_of_clauses = number_of_clauses
 		self.number_of_state_bits = number_of_state_bits
 		self.T = float(T)
 		self.s = s
 		self.q = q
+		self.clip_T = clip_T
 		self.constant_update_p = constant_update_p
 		self.binary_inference = binary_inference
 		self.and_group_normalization = and_group_normalization
@@ -644,9 +645,9 @@ class CommonTsetlinMachine():
 
 	
 class MultiOutputTsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, q=1.0, constant_update_p=0, binary_inference=False, and_group_normalization=False, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(self, number_of_clauses, T, s, q=1.0, clip_T=False, constant_update_p=0, binary_inference=False, and_group_normalization=False, boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
 		self.negative_clauses = 1
-		super().__init__(number_of_clauses, T, s, q=q, constant_update_p=constant_update_p, binary_inference=binary_inference, and_group_normalization=and_group_normalization, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(number_of_clauses, T, s, q=q, clip_T=clip_T, constant_update_p=constant_update_p, binary_inference=binary_inference, and_group_normalization=and_group_normalization, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
 
 	def fit(self, X, Y):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -670,12 +671,12 @@ class MultiOutputTsetlinMachine(CommonTsetlinMachine):
 		return (self.score(X) >= 0).astype(np.uint32).transpose()
 
 class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, q=1.0, constant_update_p=0, binary_inference=False, and_group_normalization=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(self, number_of_clauses, T, s, q=1.0, clip_T=False, constant_update_p=0, binary_inference=False, and_group_normalization=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
 		self.negative_clauses = 1
 		self.tm_type = COALESCED_TM
 		self.flip_polarity = 1
 
-		super().__init__(number_of_clauses, T, s, q=q, constant_update_p=constant_update_p, binary_inference=binary_inference, and_group_normalization=and_group_normalization, hierarchy_structure=hierarchy_structure, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(number_of_clauses, T, s, q=q, clip_T=clip_T, constant_update_p=constant_update_p, binary_inference=binary_inference, and_group_normalization=and_group_normalization, hierarchy_structure=hierarchy_structure, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
 
 	def fit(self, X, Y):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
@@ -702,11 +703,12 @@ class MultiClassCoalescedTsetlinMachine(CommonTsetlinMachine):
 		return np.argmax(self.score(X), axis=0)
 
 class MultiClassTsetlinMachine:
-	def __init__(self, number_of_clauses, T, s, q=1.0, constant_update_p=0, binary_inference=False, and_group_normalization=False, weighted_clauses=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(self, number_of_clauses, T, s, q=1.0, clip_T=False, constant_update_p=0, binary_inference=False, and_group_normalization=False, weighted_clauses=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
 		self.number_of_clauses = number_of_clauses
 		self.T = T
 		self.s = s
 		self.q = q
+		self.clip_T = clip_T
 		self.constant_update_p = constant_update_p,
 		self.binary_inference = binary_inference,
 		self.and_group_normalization = and_group_normalization
@@ -727,7 +729,7 @@ class MultiClassTsetlinMachine:
 		if not self.configured:
 			self.tms = []
 			for i in range(self.number_of_outputs):
-				self.tms.append(TsetlinMachine(self.number_of_clauses, self.T, self.s, q=self.q, and_group_normalization=self.and_group_normalization, weighted_clauses=self.weighted_clauses, hierarchy_structure=self.hierarchy_structure, boost_true_positive_feedback=self.boost_true_positive_feedback, number_of_state_bits=self.number_of_state_bits, append_negated=self.append_negated, grid=self.grid, block=self.block, seed=self.seed+i))
+				self.tms.append(TsetlinMachine(self.number_of_clauses, self.T, self.s, q=self.q, clip_T=self.clip_T, constant_update_p=self.constant_update_p, binary_inference=self.binary_inference, and_group_normalization=self.and_group_normalization, weighted_clauses=self.weighted_clauses, hierarchy_structure=self.hierarchy_structure, boost_true_positive_feedback=self.boost_true_positive_feedback, number_of_state_bits=self.number_of_state_bits, append_negated=self.append_negated, grid=self.grid, block=self.block, seed=self.seed+i))
 
 			self.configured = True
 
@@ -793,7 +795,7 @@ class MultiClassTsetlinMachine:
 		self.configured = True
 
 class TsetlinMachine(CommonTsetlinMachine):
-	def __init__(self, number_of_clauses, T, s, q=1.0, constant_update_p=0, binary_inference=False, and_group_normalization=False, weighted_clauses=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
+	def __init__(self, number_of_clauses, T, s, q=1.0, clip_T=False, constant_update_p=0, binary_inference=False, and_group_normalization=False, weighted_clauses=False, hierarchy_structure=((AND_GROUP, 1)), boost_true_positive_feedback=1, number_of_state_bits=8, append_negated=True, grid=(16*13,1,1), block=(128,1,1), seed=None):
 		self.negative_clauses = 1
 		self.flip_polarity = 0
 
@@ -802,7 +804,7 @@ class TsetlinMachine(CommonTsetlinMachine):
 		else:
 			self.tm_type = VANILLA_TM
 
-		super().__init__(number_of_clauses, T, s, q=q, constant_update_p=constant_update_p, binary_inference=binary_inference, and_group_normalization=and_group_normalization, hierarchy_structure=hierarchy_structure, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
+		super().__init__(number_of_clauses, T, s, q=q, clip_T=clip_T, constant_update_p=constant_update_p, binary_inference=binary_inference, and_group_normalization=and_group_normalization, hierarchy_structure=hierarchy_structure, boost_true_positive_feedback=boost_true_positive_feedback, number_of_state_bits=number_of_state_bits, append_negated=append_negated, grid=grid, block=block, seed=seed)
 
 	def fit(self, X, Y):
 		X = X.reshape(X.shape[0], X.shape[1], 1)
