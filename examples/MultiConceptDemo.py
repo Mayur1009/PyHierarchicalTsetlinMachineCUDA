@@ -21,7 +21,7 @@ def default_args(**kwargs):
 	parser.add_argument('--binary-inference', action='store_true')
 	parser.add_argument('--vanilla', action='store_true')
 	parser.add_argument('--and-group-normalization', action='store_true')
-	parser.add_argument('--clip-T', action='store_true')
+	parser.add_argument('--no-clipping', action='store_true')
 
 	args = parser.parse_args()
 	for key, value in kwargs.items():
@@ -55,7 +55,7 @@ for i in range(args.number_of_examples):
 
 	Y_test[i] = np.logical_xor(x[0] % 2, x[1] % 2)
 
-f = open("multi_concept_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_elements, args.noise, args.clip_T), "w")
+f = open("multi_concept_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_elements, args.noise, args.no_clipping), "w")
 
 for r in range(args.runs):
 	seed = np.random.randint(10000)
@@ -70,7 +70,7 @@ for r in range(args.runs):
 			seed=seed,
 			number_of_state_bits=args.number_of_state_bits,
 			boost_true_positive_feedback=0,
-			clip_T=args.clip_T,
+			no_clipping=args.no_clipping,
 			append_negated=False,
 			hierarchy_structure=(
 				(tm.AND_GROUP, features),
@@ -88,7 +88,7 @@ for r in range(args.runs):
 			seed=seed,
 			number_of_state_bits=args.number_of_state_bits,
 			boost_true_positive_feedback=0,
-			clip_T=args.clip_T,
+			no_clipping=args.no_clipping,
 			append_negated=False,
 			hierarchy_structure=(
 				(tm.AND_GROUP, features),
