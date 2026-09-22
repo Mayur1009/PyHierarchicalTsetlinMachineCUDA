@@ -22,6 +22,7 @@ def default_args(**kwargs):
 	parser.add_argument('--binary-inference', action='store_true')
 	parser.add_argument('--vanilla', action='store_true')
 	parser.add_argument('--and-group-normalization', action='store_true')
+	parser.add_argument('--clip-T', action='store_true')
 
 	args = parser.parse_args()
 	for key, value in kwargs.items():
@@ -96,12 +97,12 @@ for i in range(args.number_of_testing_examples):
 				X_test[i, j * (2 + args.number_of_irrelevant_features):j * (2 + args.number_of_irrelevant_features) + 2] = [1,1]
 
 
-f = open("and_of_xors_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_irrelevant_features, args.noise, args.number_of_ands), "w")
+f = open("and_of_xors_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%.2f_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.number_of_irrelevant_features, args.noise, args.number_of_ands, args.clip_T), "w")
 
 for r in range(args.runs):
 	if not args.vanilla:
 		tsetlin_machine = TsetlinMachine(
-			args.number_of_clauses,
+			args.number_of_clauses * number_of_alternatives,
 			args.T,
 			args.s,
 			binary_inference=args.binary_inference,
@@ -109,6 +110,7 @@ for r in range(args.runs):
 			and_group_normalization=args.and_group_normalization,
 			number_of_state_bits=args.number_of_state_bits,
 			boost_true_positive_feedback=0,
+			clip_T=args.clip_T,
 			hierarchy_structure=(
 				(tm.AND_GROUP, 2 + args.number_of_irrelevant_features),
 				(tm.OR_ALTERNATIVES, args.number_of_alternatives),
@@ -126,6 +128,7 @@ for r in range(args.runs):
 			and_group_normalization=args.and_group_normalization,
 			number_of_state_bits=args.number_of_state_bits,
 			boost_true_positive_feedback=0,
+			clip_T=args.clip_T,
 			hierarchy_structure=(
 				(tm.AND_GROUP, (2 + args.number_of_irrelevant_features) * args.number_of_ands),
 				(tm.OR_ALTERNATIVES, args.number_of_alternatives)
