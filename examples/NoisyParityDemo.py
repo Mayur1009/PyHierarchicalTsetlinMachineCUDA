@@ -18,6 +18,7 @@ def default_args(**kwargs):
 	parser.add_argument("--number-of-alternatives-2", default=3, type=int)
 	parser.add_argument('--vanilla', action='store_true')
 	parser.add_argument('--and-group-normalization', action='store_true')
+	parser.add_argument('--clip-T', action='store_true')
 
 	args = parser.parse_args()
 	for key, value in kwargs.items():
@@ -35,14 +36,46 @@ test_data = np.loadtxt("./examples/NoisyParityTestingData.txt").astype(np.uint32
 X_test = test_data[:,0:-1]
 Y_test = test_data[:,-1]
 
-f = open("noisy_parity_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives_1, args.number_of_alternatives_2), "w")
+f = open("noisy_parity_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives_1, args.number_of_alternatives_2, args.clip_T), "w")
 
 for r in range(args.runs):
 	seed = np.random.randint(10000)
 	if args.vanilla:
-		tsetlin_machine = TsetlinMachine(args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2, args.T, args.s, binary_inference=args.binary_inference, constant_update_p=args.constant_update_p, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 12), (tm.AND_GROUP, 1)))
+		tsetlin_machine = TsetlinMachine(
+			args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2,
+			args.T,
+			args.s,
+			binary_inference=args.binary_inference,
+			constant_update_p=args.constant_update_p,
+			and_group_normalization=args.and_group_normalization,
+			seed=seed, number_of_state_bits=args.number_of_state_bits,
+			boost_true_positive_feedback=0,
+			clip_T=args.clip_T,
+			hierarchy_structure=(
+				(tm.AND_GROUP, 12),
+				(tm.AND_GROUP, 1)
+			)
+		)
 	else:
-		tsetlin_machine = TsetlinMachine(args.number_of_clauses, args.T, args.s, binary_inference=args.binary_inference, constant_update_p=args.constant_update_p, and_group_normalization=args.and_group_normalization, seed=seed, number_of_state_bits=args.number_of_state_bits, boost_true_positive_feedback=0, hierarchy_structure=((tm.AND_GROUP, 3), (tm.OR_ALTERNATIVES, args.number_of_alternatives_1), (tm.AND_GROUP, 2), (tm.OR_ALTERNATIVES, args.number_of_alternatives_2), (tm.AND_GROUP, 2)))
+		tsetlin_machine = TsetlinMachine(
+			args.number_of_clauses,
+			args.T,
+			args.s,
+			binary_inference=args.binary_inference,
+			constant_update_p=args.constant_update_p,
+			and_group_normalization=args.and_group_normalization,
+			seed=seed,
+			number_of_state_bits=args.number_of_state_bits,
+			boost_true_positive_feedback=0,
+			clip_T=args.clip_T,
+			hierarchy_structure=(
+				(tm.AND_GROUP, 3),
+				(tm.OR_ALTERNATIVES, args.number_of_alternatives_1),
+				(tm.AND_GROUP, 2),
+				(tm.OR_ALTERNATIVES, args.number_of_alternatives_2),
+				(tm.AND_GROUP, 2)
+			)
+		)
 
 	print("\nAccuracy over %d epochs:\n" % (args.epochs,))
 
