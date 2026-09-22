@@ -712,8 +712,8 @@ class MultiClassTsetlinMachine:
 		self.s = s
 		self.q = q
 		self.clip_T = clip_T
-		self.constant_update_p = constant_update_p,
-		self.binary_inference = binary_inference,
+		self.constant_update_p = constant_update_p
+		self.binary_inference = binary_inference
 		self.and_group_normalization = and_group_normalization
 		self.weighted_clauses = weighted_clauses
 		self.hierarchy_structure = hierarchy_structure
