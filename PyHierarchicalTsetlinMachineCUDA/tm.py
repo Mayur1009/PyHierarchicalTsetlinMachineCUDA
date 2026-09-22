@@ -440,7 +440,10 @@ class CommonTsetlinMachine():
 			cuda.memcpy_dtoh(self.class_sum, self.class_sum_gpu)
 			class_sum[:, e] = self.class_sum
 	
-		class_sum = np.clip(class_sum.reshape((self.number_of_outputs, number_of_examples)), -self.T, self.T)
+		if self.clip:
+			class_sum = np.clip(class_sum.reshape((self.number_of_outputs, number_of_examples)), -self.T, self.T)
+		else:
+			class_sum = class_sum.reshape((self.number_of_outputs, number_of_examples))
 
 		return class_sum
 
