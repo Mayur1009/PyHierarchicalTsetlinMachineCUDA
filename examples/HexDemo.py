@@ -19,6 +19,7 @@ def default_args(**kwargs):
     parser.add_argument('--binary-inference', action='store_true')
     parser.add_argument('--vanilla', action='store_true')
     parser.add_argument('--and-group-normalization', action='store_true')
+    parser.add_argument('--clip-T', action='store_true')
 
     args = parser.parse_args()
     for key, value in kwargs.items():
@@ -35,7 +36,7 @@ Y_train = data[:int(len(data)*0.8),-1]
 X_test = data[int(len(data)*0.8):,0:-1]
 Y_test = data[int(len(data)*0.8):,-1]
 
-f = open("hex_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives), "w")
+f = open("hex_statistics_%d_%d_%.2f_%d_%d_%d_%d_%d_%d_%d.txt" % (args.number_of_clauses, args.T, args.s, args.number_of_state_bits, args.vanilla, args.and_group_normalization, args.constant_update_p, args.binary_inference, args.number_of_alternatives, args.clip_T), "w")
 
 for r in range(args.runs):
     seed = np.random.randint(10000)
@@ -52,6 +53,7 @@ for r in range(args.runs):
             constant_update_p=args.constant_update_p,
             and_group_normalization=args.and_group_normalization,
             seed=seed,
+            clip_T=args.clip_T,
             hierarchy_structure=(
                 (tm.AND_GROUP, 288),
                 (tm.AND_GROUP, 1)
@@ -69,6 +71,7 @@ for r in range(args.runs):
             constant_update_p=args.constant_update_p,
             and_group_normalization=args.and_group_normalization,
             seed=seed,
+            clip_T=args.clip_T,
             hierarchy_structure=(
                 (tm.AND_GROUP, 72),
                 (tm.OR_ALTERNATIVES, args.number_of_alternatives),
