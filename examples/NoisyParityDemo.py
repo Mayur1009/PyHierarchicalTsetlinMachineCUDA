@@ -42,7 +42,7 @@ for r in range(args.runs):
 	seed = np.random.randint(10000)
 	if args.vanilla:
 		tsetlin_machine = TsetlinMachine(
-			args.number_of_clauses * 2 * args.number_of_alternatives_1 * 2 * args.number_of_alternatives_2 * 2 / 12,
+			args.number_of_clauses * 3 * args.number_of_alternatives_1 * 2 * args.number_of_alternatives_2 * 2 / 12,
 			args.T,
 			args.s,
 			binary_inference=args.binary_inference,
