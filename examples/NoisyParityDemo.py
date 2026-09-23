@@ -17,7 +17,7 @@ def default_args(**kwargs):
 	parser.add_argument("--number-of-alternatives-1", default=3, type=int)
 	parser.add_argument("--number-of-alternatives-2", default=3, type=int)
 	parser.add_argument('--vanilla', action='store_true')
-	parser.add_argument('--and-group-normalization', action='store_true')
+	parser.add_argument('--and-group-normalizatiovn', action='store_true')
 	parser.add_argument('--no-clipping', action='store_true')
 
 	args = parser.parse_args()
@@ -42,7 +42,7 @@ for r in range(args.runs):
 	seed = np.random.randint(10000)
 	if args.vanilla:
 		tsetlin_machine = TsetlinMachine(
-			args.number_of_clauses * args.number_of_alternatives_1 * args.number_of_alternatives_2,
+			args.number_of_clauses * 2 * args.number_of_alternatives_1 * 2 * args.number_of_alternatives_2 * 2 / 12,
 			args.T,
 			args.s,
 			binary_inference=args.binary_inference,
